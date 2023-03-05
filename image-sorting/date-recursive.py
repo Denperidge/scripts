@@ -12,7 +12,9 @@ MODES = ["prepend", "undo", "patch"]
 
 args = [arg.lower() for arg in argv]
 
-apply = "--apply" in args
+apply = "--apply" in args  # Whether to not do a dry run
+allow_rename_original_when_undoing = "--arowu" in args
+patch_before_prepend = "--patch" in args
 
 
 def prepend(filename):
@@ -32,7 +34,8 @@ def prepend(filename):
         
         if apply:
             # I think this was for some iphone weird stuff
-            patch(path)
+            if patch_before_prepend:
+                patch(path)
             path.rename(new_path)
 
 
@@ -53,7 +56,18 @@ def undo(filename):
                 --> {new_path}
             """)
         if apply:
-            path.rename(new_path)
+            try:
+                path.rename(new_path)
+            except FileExistsError as e:
+                if allow_rename_original_when_undoing:
+                    print(f"""
+                        Already exists: {new_path}
+                        Renaming original, redoing undo to {path}
+                    """)
+                    new_path.rename(new_path.with_stem(new_path.stem + "-1"))
+                    undo(path)
+                else:
+                    raise e
 
     else:
         print(f"SKIPPING {path.name}")
@@ -67,7 +81,7 @@ def patch(path=None):
     print(f"Running exiftool on {path}")
     if apply:
         # "Filecreatedate > filemodifydate instead of datetimeoriginal > filemodifydate because some images don't have datetimeoriginal
-        system(f'exiftool -r "-FileCreateDate<DateTimeOriginal" "-FileModifyDate<FileCreateDate" "{path}"')
+        system(f'exiftool -if "$filename=~/IMG_/" -r -ee "-FileCreateDate<DateTimeOriginal" "-FileModifyDate<FileCreateDate" "{path}"')
 
 
 
