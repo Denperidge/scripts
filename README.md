@@ -2,38 +2,9 @@
 
 Some scripts that I have written!
 
-## Scripts:
-
-### Image sorting
-#### [date-recursive.py](date-recursive.py)
-Recursively rename your images based on metadata!
-
-*Requirements:* Python3, exiftool
-
-#### [DELduplicates.py](DELduplicates.py)
-I forgot what I used this for but it was in the folder where MOVe.py was!
-
-*Requirements:* Python3
-
-#### [MOVe.py](MOVe.py)
-(i)Phones now often take pictures in .JPG/.PNG as well as .MOV. So now I use Photosift to sort the images, and then run MOVe.py to move the .MOV's towards them!
-
-*Requirements:* Python3
-
-
-### Development
-#### [gh-card-png.sh](gh-card-png.sh)
-Leverages the gh-card project to create PNG repo cards. Because Google Docs doesn't support SVG's.
-
-*Requirements:* wget, inkscape
-
-
-#### [quick-multiple-ssh-key-setup.py](quick-multiple-ssh-key-setup.py)
-If you're like me and postponed setting up ssh keys for way too long
-and now you have a bunch of servers to do it with, here you go!
-
-*Requirements:* Python3
-
+## Scripts for...
+- [... image sorting](image-sorting/)
+- [... development](development/)
 
 ## Discussions
 ### Why a repo?
