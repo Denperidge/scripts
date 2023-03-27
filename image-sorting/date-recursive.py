@@ -15,6 +15,24 @@ args = [arg.lower() for arg in argv]
 apply = "--apply" in args  # Whether to not do a dry run
 allow_rename_original_when_undoing = "--arowu" in args
 patch_before_prepend = "--patch" in args
+undo_only_with_date = "--uowd" in args  # Optional parameter of yyyyMMdd
+
+if undo_only_with_date:
+    try:
+        date_string = args[args.index("--uowd") + 1]
+
+        # if the arg is just a next arg, instead of a value
+        if date_string.startswith("-"):
+            raise IndexError
+        
+        date = datetime.strptime(date_string, DATE_FORMAT_STRING.split("_")[0])
+        
+    except IndexError:
+        date = datetime.now()
+    
+    undo_only_with_date_regex = date.strftime(DATE_FORMAT_STRING.split("_")[0]) + "_.*?" + NAME_FORMATTED
+    print("Only processing files with specified date. Regex: " + undo_only_with_date_regex)
+    
 
 
 def prepend(filename):
@@ -44,7 +62,14 @@ def prepend(filename):
 
 def undo(filename):
     path = Path(filename).absolute()
-    should_be_undo_ed = search(NAME_FORMATTED, path.name, RegexFlag.IGNORECASE)
+
+    if not undo_only_with_date:
+        filename_regex = NAME_FORMATTED
+    if undo_only_with_date:
+        filename_regex = undo_only_with_date_regex
+
+    should_be_undo_ed = search(filename_regex, path.name, RegexFlag.IGNORECASE)
+
     if should_be_undo_ed is not None:
         to_remove = should_be_undo_ed.group(0)
         new_path = path.with_name(path.name.replace(to_remove, ""))
@@ -81,7 +106,7 @@ def patch(path=None):
     print(f"Running exiftool on {path}")
     if apply:
         # "Filecreatedate > filemodifydate instead of datetimeoriginal > filemodifydate because some images don't have datetimeoriginal
-        system(f'exiftool -if "$filename=~/IMG_/" -r -ee "-FileCreateDate<DateTimeOriginal" "-FileModifyDate<FileCreateDate" "{path}"')
+        print(system(f'exiftool -if "$filename=~/IMG_/" -r -ee "-FileCreateDate<DateTimeOriginal" "-FileModifyDate<FileCreateDate" "{path}"'))
 
 
 
