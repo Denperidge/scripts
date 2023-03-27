@@ -15,29 +15,33 @@ args = [arg.lower() for arg in argv]
 apply = "--apply" in args  # Whether to not do a dry run
 allow_rename_original_when_undoing = "--arowu" in args
 patch_before_prepend = "--patch" in args
-undo_only_with_date = "--uowd" in args  # Optional parameter of yyyyMMdd
+filename_startswith = "--startswith" in args  # Optional parameter of yyyyMMdd
 
-if undo_only_with_date:
+if filename_startswith:
     try:
-        date_string = args[args.index("--uowd") + 1]
+        next_arg = args[args.index("--startswith") + 1]
 
         # if the arg is just a next arg, instead of a value
-        if date_string.startswith("-"):
+        if next_arg.startswith("-"):
             raise IndexError
         
-        date = datetime.strptime(date_string, DATE_FORMAT_STRING.split("_")[0])
+        filename_startswith_str = next_arg
         
     except IndexError:
-        date = datetime.now()
+        today = datetime.now()
+        filename_startswith_str = today.strftime(DATE_FORMAT_STRING.split("_")[0])
     
-    undo_only_with_date_regex = date.strftime(DATE_FORMAT_STRING.split("_")[0]) + "_.*?" + NAME_FORMATTED
-    print("Only processing files with specified date. Regex: " + undo_only_with_date_regex)
+    filename_startswith_regex = filename_startswith_str + ".*?_.*?" + NAME_FORMATTED
+    print(f"Only processing files that start with specified regex. Regex: " + filename_startswith_str + " / " + filename_startswith_regex)
     
 
 
 def prepend(filename):
     path = Path(filename).absolute() 
     if path.name.startswith("IMG_"):
+
+        if apply and patch_before_prepend:
+                patch(path, extra_tags="")
 
         # st_mtime is last modified
         file_date = datetime.fromtimestamp(path.stat().st_mtime)
@@ -50,10 +54,7 @@ def prepend(filename):
                 --> {new_path}
             """)
         
-        if apply:
-            # I think this was for some iphone weird stuff
-            if patch_before_prepend:
-                patch(path)
+        if apply:            
             path.rename(new_path)
 
 
@@ -63,10 +64,10 @@ def prepend(filename):
 def undo(filename):
     path = Path(filename).absolute()
 
-    if not undo_only_with_date:
+    if not filename_startswith:
         filename_regex = NAME_FORMATTED
-    if undo_only_with_date:
-        filename_regex = undo_only_with_date_regex
+    if filename_startswith:
+        filename_regex = filename_startswith_regex
 
     should_be_undo_ed = search(filename_regex, path.name, RegexFlag.IGNORECASE)
 
@@ -98,16 +99,24 @@ def undo(filename):
         print(f"SKIPPING {path.name}")
 
 
-def patch(path=None):
+def patch(path=None, extra_tags="-r"):
     if path is None:
         path = Path(DIRECTORY[:DIRECTORY.index("**")]).absolute()
         path = str(path) + "/"
+    
+    """
+    if not filename_startswith:
+        filename_filter = "IMG_"
+
+    if filename_startswith:
+        filename_filter = filename_startswith_str
+    """
 
     print(f"Running exiftool on {path}")
     if apply:
         # "Filecreatedate > filemodifydate instead of datetimeoriginal > filemodifydate because some images don't have datetimeoriginal
-        print(system(f'exiftool -if "$filename=~/IMG_/" -r -ee "-FileCreateDate<DateTimeOriginal" "-FileModifyDate<FileCreateDate" "{path}"'))
-
+        print(system(f'exiftool -if "$filename=~/IMG_/" -ee {extra_tags} "-FileCreateDate<TrackCreateDate" "-FileCreateDate<MediaCreateDate" "-FileCreateDate<TrackCreateDate" "-FileCreateDate<CreateDate" "-FileCreateDate<EXIF:DateTimeOriginal" "-FileCreateDate<DateTimeOriginal" "-FileModifyDate<FileCreateDate" "{path}"'))
+        
 
 
 
