@@ -151,7 +151,7 @@ def patch(path=None, extra_tags="-r"):
 
 
             if is_video:
-                attributes_to_assign = '"-TrackCreateDate={0}" "-TrackModifyDate={0}" "-MediaCreateDate={0}" "-MediaModifyDate={0}" "-CreateDate={0}" "-ModifyDate={0}"'
+                attributes_to_assign = '-api QuickTimeUTC "-TrackCreateDate={0}" "-TrackModifyDate={0}" "-MediaCreateDate={0}" "-MediaModifyDate={0}" "-CreateDate={0}" "-ModifyDate={0}"'
             else:
                 attributes_to_assign = '"-DateTimeOriginal={0}"'
             
@@ -190,7 +190,7 @@ def patch(path=None, extra_tags="-r"):
             create_date = get_attributes(sibling, "-FileCreateDate").split(":", 1)[1].strip()
             print(attributes_to_assign.format(create_date))
 
-            system(f'exiftool {attributes_to_assign.format(create_date)} {path}')
+            system(f'exiftool {attributes_to_assign.format(create_date)} "{path}"')
         
         attributes_to_assign = ''
 
