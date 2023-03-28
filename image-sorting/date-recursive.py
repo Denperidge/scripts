@@ -12,11 +12,15 @@ NAME_FORMATTED = r"[^a-z]{1,}_{2}"
 MODES = ["prepend", "undo", "patch"]
 
 args = [arg.lower() for arg in argv]
+del args[0]  # Remove script location
 
 # If the first arg is a MODE, select it
-if args[1] in MODES:
-    mode = args[1]
-else:
+try:
+    if args[0] in MODES:
+        mode = args[0]
+    else:
+        mode = None
+except IndexError:
     mode = None
 
 provided_path = None
@@ -187,17 +191,22 @@ def patch(path=None, extra_tags="-r"):
             print(attributes_to_assign.format(create_date))
 
             system(f'exiftool {attributes_to_assign.format(create_date)} {path}')
+        
+        attributes_to_assign = ''
+
+
+        if is_video:
+            attributes_to_assign += '"-FileCreateDate<TrackCreateDate" "-FileModifyDate<TrackModifyDate" '
+            attributes_to_assign += '"-FileCreateDate<MediaCreateDate" "-FileModifyDate<MediaModifyDate" '
+            attributes_to_assign += '"-FileCreateDate<CreateDate" "-FileModifyDate<ModifyDate" '
+        else:
+            attributes_to_assign += '"-FileCreateDate<DateTimeOriginal" "-FileModifyDate<DateTimeOriginal" '
 
         # "Filecreatedate > filemodifydate instead of datetimeoriginal > filemodifydate because some images don't have datetimeoriginal
-        system(f'exiftool -if "$filename=~/IMG_/" -ee {extra_tags} \
-                "-FileCreateDate<TrackCreateDate" "-FileModifyDate<TrackModifyDate" \
-                "-FileCreateDate<MediaCreateDate" "-FileModifyDate<MediaModifyDate" \
-                "-FileCreateDate<CreateDate" "-FileModifyDate<ModifyDate" \
-                "-FileCreateDate<DateTimeOriginal" "-FileModifyDate<FileCreateDate" \
-                "{path}"')
+        system(f'exiftool -if "$filename=~/IMG_/" -ee {extra_tags} {attributes_to_assign} "{path}"')
         
 def get_attributes(path, attributes):
-    return str(check_output(f'exiftool {attributes} {path}').decode("utf-8")).strip()
+    return str(check_output(f'exiftool {attributes} "{path}"').decode("utf-8")).strip()
 
 
 print(
@@ -222,11 +231,11 @@ elif mode == MODES[1]:
     handle_file = undo
 # Patch iCloud metadata
 elif mode == MODES[2]:
-    patch(provided_path)
+    patch(str(provided_path))
     exit(0)
 
 
-files = glob(provided_path, recursive=True)
+files = glob(str(provided_path), recursive=True)
 for file in files:
     handle_file(file)
 
