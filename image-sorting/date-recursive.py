@@ -13,6 +13,22 @@ MODES = ["prepend", "undo", "patch"]
 
 args = [arg.lower() for arg in argv]
 
+# If the first arg is a MODE, select it
+if args[1] in MODES:
+    mode = args[1]
+else:
+    mode = None
+
+provided_path = None
+for arg in args:
+    if "/" in arg or "\\" in arg:
+        provided_path = Path(arg)
+        break
+if provided_path is None:
+    provided_path = DIRECTORY        
+
+
+
 apply = "--apply" in args  # Whether to not do a dry run
 allow_rename_original_when_undoing = "--arowu" in args
 patch_before_prepend = "--patch" in args
@@ -192,8 +208,8 @@ print(
         {MODES[2]}: normalize metadata from iCloud
     """)
 
-
-mode = input("Select mode: ").lower().strip()
+if mode is None:
+    mode = input("Select mode: ").lower().strip()
 
 if mode not in MODES:
     exit(0)
@@ -206,11 +222,11 @@ elif mode == MODES[1]:
     handle_file = undo
 # Patch iCloud metadata
 elif mode == MODES[2]:
-    patch()
+    patch(provided_path)
     exit(0)
 
 
-files = glob(DIRECTORY, recursive=True)
+files = glob(provided_path, recursive=True)
 for file in files:
     handle_file(file)
 
