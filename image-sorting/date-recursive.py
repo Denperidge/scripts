@@ -2,6 +2,7 @@ from glob import glob
 from pathlib import Path
 from sys import argv
 from os import system
+from subprocess import check_output
 from re import search, RegexFlag
 from datetime import datetime
 
@@ -16,6 +17,7 @@ apply = "--apply" in args  # Whether to not do a dry run
 allow_rename_original_when_undoing = "--arowu" in args
 patch_before_prepend = "--patch" in args
 filename_startswith = "--startswith" in args  # Optional parameter of yyyyMMdd
+always_patch_videos = "--apv" in args
 
 if filename_startswith:
     try:
@@ -102,7 +104,9 @@ def undo(filename):
 def patch(path=None, extra_tags="-r"):
     if path is None:
         path = Path(DIRECTORY[:DIRECTORY.index("**")]).absolute()
-        path = str(path) + "/"
+        path = Path(str(path) + "/")
+    else:
+        path = Path(path)
     
     """
     if not filename_startswith:
@@ -114,10 +118,70 @@ def patch(path=None, extra_tags="-r"):
 
     print(f"Running exiftool on {path}")
     if apply:
-        # "Filecreatedate > filemodifydate instead of datetimeoriginal > filemodifydate because some images don't have datetimeoriginal
-        print(system(f'exiftool -if "$filename=~/IMG_/" -ee {extra_tags} "-FileCreateDate<TrackCreateDate" "-FileCreateDate<MediaCreateDate" "-FileCreateDate<TrackCreateDate" "-FileCreateDate<CreateDate" "-FileCreateDate<EXIF:DateTimeOriginal" "-FileCreateDate<DateTimeOriginal" "-FileModifyDate<FileCreateDate" "{path}"'))
         
+        has_needed_metadata = get_attributes(path, '"-TrackCreateDate" "-TrackModifyDate" "-MediaCreateDate" "-MediaModifyDate" "-CreateDate" "-ModifyDate" "-DateTimeOriginal"')
+        is_video = "video" in get_attributes(path, "-MimeType")
 
+        if always_patch_videos and is_video:
+            has_needed_metadata = False
+
+        # If the file doesn't have the needed metadata, look for a file that does
+        if not has_needed_metadata:
+            print("File lacks needed metadata, extracting from sibling")
+
+
+            if is_video:
+                attributes_to_assign = '"-TrackCreateDate={0}" "-TrackModifyDate={0}" "-MediaCreateDate={0}" "-MediaModifyDate={0}" "-CreateDate={0}" "-ModifyDate={0}"'
+            else:
+                attributes_to_assign = '"-DateTimeOriginal={0}"'
+            
+            # Remove date thing
+            name_without_prepend = path.stem.split("__")[1] if "__" in path.stem else path.stem
+            sibling_selector = str(path.with_name(f'*{name_without_prepend}*[!{path.suffix}]'))
+
+            print("Searching using " + sibling_selector)
+
+            siblings = glob(sibling_selector)
+            if len(siblings) == 0:
+                print("No siblings found, don't patch")
+                return
+            if len(siblings) > 1:
+                print("More siblings found than expected! Will try to check if one can be found with the same model")
+                original_model = get_attributes(path, "-s -s -s -Model")
+                print(original_model)
+
+                for sibling in siblings:
+                    print(get_attributes(sibling, "-s -s -s -Model"))
+                siblings_with_the_same_model = [sibling for sibling in siblings if get_attributes(sibling, "-s -s -s -Model") == original_model and not sibling.endswith("original")]
+
+                if len(siblings_with_the_same_model) == 0:
+                    print("No siblings found with the same model. Abort.")
+                    exit(1)
+                elif len(siblings_with_the_same_model) > 1:
+                    print("Too many siblings with the same model. Abort.")
+                    exit(1)
+                else:
+                    sibling = siblings_with_the_same_model[0]
+            else:
+                sibling = siblings[0]
+            # Ensure it's patched
+            patch(sibling, "")
+
+            create_date = get_attributes(sibling, "-FileCreateDate").split(":", 1)[1].strip()
+            print(attributes_to_assign.format(create_date))
+
+            system(f'exiftool {attributes_to_assign.format(create_date)} {path}')
+
+        # "Filecreatedate > filemodifydate instead of datetimeoriginal > filemodifydate because some images don't have datetimeoriginal
+        system(f'exiftool -if "$filename=~/IMG_/" -ee {extra_tags} \
+                "-FileCreateDate<TrackCreateDate" "-FileModifyDate<TrackModifyDate" \
+                "-FileCreateDate<MediaCreateDate" "-FileModifyDate<MediaModifyDate" \
+                "-FileCreateDate<CreateDate" "-FileModifyDate<ModifyDate" \
+                "-FileCreateDate<DateTimeOriginal" "-FileModifyDate<FileCreateDate" \
+                "{path}"')
+        
+def get_attributes(path, attributes):
+    return str(check_output(f'exiftool {attributes} {path}').decode("utf-8")).strip()
 
 
 print(
