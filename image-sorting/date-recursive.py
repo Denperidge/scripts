@@ -153,7 +153,7 @@ def patch(path=None, extra_tags="-r"):
             if is_video:
                 attributes_to_assign = '-api QuickTimeUTC "-TrackCreateDate={0}" "-TrackModifyDate={0}" "-MediaCreateDate={0}" "-MediaModifyDate={0}" "-CreateDate={0}" "-ModifyDate={0}"'
             else:
-                attributes_to_assign = '"-DateTimeOriginal={0}"'
+                attributes_to_assign = '-api QuickTimeUTC "-DateTimeOriginal={0}"'
             
             # Remove date thing
             name_without_prepend = path.stem.split("__")[1] if "__" in path.stem else path.stem
@@ -196,6 +196,7 @@ def patch(path=None, extra_tags="-r"):
 
 
         if is_video:
+            attributes_to_assign += '-api QuickTimeUTC '
             attributes_to_assign += '"-FileCreateDate<TrackCreateDate" "-FileModifyDate<TrackModifyDate" '
             attributes_to_assign += '"-FileCreateDate<MediaCreateDate" "-FileModifyDate<MediaModifyDate" '
             attributes_to_assign += '"-FileCreateDate<CreateDate" "-FileModifyDate<ModifyDate" '
