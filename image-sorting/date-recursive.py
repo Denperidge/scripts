@@ -11,6 +11,8 @@ DATE_FORMAT_STRING = "%Y%m%d_%H%M%S__"  # == yyyyMMdd_HHmmss__
 NAME_FORMATTED = r"[^a-z]{1,}_{2}"
 MODES = ["prepend", "undo", "patch"]
 
+ARG_ALLOWDIFF = "--allowdiff"
+
 args = [arg.lower() for arg in argv]
 del args[0]  # Remove script location
 
@@ -38,6 +40,7 @@ allow_rename_original_when_undoing = "--arowu" in args
 patch_before_prepend = "--patch" in args
 filename_startswith = "--startswith" in args  # Optional parameter of yyyyMMdd
 always_patch_videos = "--apv" in args
+allow_differing_dates_for_same_stem = ARG_ALLOWDIFF in args
 
 if filename_startswith:
     try:
@@ -57,8 +60,11 @@ if filename_startswith:
     print(f"Only processing files that start with specified regex. Regex: " + filename_startswith_str + " / " + filename_startswith_regex)
     
 
-
+previous_old_stem = None
+previous_new_stem = None
 def prepend(filename):
+    global previous_old_stem, previous_new_stem
+    
     path = Path(filename).absolute() 
     if path.name.startswith("IMG_"):
 
@@ -69,14 +75,28 @@ def prepend(filename):
         file_date = datetime.fromtimestamp(path.stat().st_mtime)
 
         new_path = path.with_name(file_date.strftime(DATE_FORMAT_STRING) + path.name)
+
+
+
+        if not allow_differing_dates_for_same_stem and previous_new_stem is not None:
+            if previous_old_stem == path.stem and new_path.stem != previous_new_stem:
+                print(f"The new path ({new_path.stem}) would be different to the rename done with the same name before ({previous_new_stem})")
+                print(f"Either run again with {ARG_ALLOWDIFF}, or check the dates of your files!")
+                exit(1)
+                
+
+        print("new path: " + new_path.stem)
+        previous_new_stem = new_path.stem
+        previous_old_stem = path.stem
+
         print(f"""
 
             Renaming:
                     {path}
                 --> {new_path}
             """)
-        
-        if apply:            
+
+        if apply:
             path.rename(new_path)
 
 

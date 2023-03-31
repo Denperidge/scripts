@@ -18,6 +18,7 @@ Recursively rename your images based on metadata!
 | --patch               | In *prepend*: patch iCloud metadata of the file before prepending it |
 | --startswith `STRING` | In *undo*: undo only if the filename starts with `STRING`. Useful when undoing a rename of a specific date |
 | --apv                 | In *patch* or *prepend --patch*: force video files to be patched, even if they already have the required metadata |
+| --allow-diff          | In *prepend*: by default, if two files with the same original stem (for example, img_0001.jpg & img_0001.mov) would get different prepends (thus having different datetime metadata), the script will report this and then abort. Enabling this flag will override this behaviour, and allow the script to continue even with differences in prepends |
 
 Example usages:
 ```bash
