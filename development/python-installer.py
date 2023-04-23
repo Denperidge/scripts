@@ -63,13 +63,12 @@ class Release():
         
         update_status(f"Extracted to {dir}")
 
-        for command in ["./configure", "make", "make altinstall"]:
+        for command in ["./configure", "make", ["sudo", "make", "altinstall"]]:
             update_status(f"Running {command}...")
-            run(command, cwd=dir, stdout=PIPE, stderr=PIPE)
+            run(command, cwd=dir)
         
-
         update_status(f"Cleaning up tmp files for {self.tag}")
-        rmtree(dir)
+        run(["sudo", "rm", "-rf", dir])
         remove(self.tgz)
             
         update_status(f"Installed {self.tag}!")
@@ -117,9 +116,10 @@ def key_is_action(key: str):
     
 def update_status(status):
     """Clears the curses CLI and displays the provided string"""
-    screen.clear()
-    screen.addstr(status)
-    screen.refresh()
+    #screen.clear()
+    #screen.addstr(status)
+    #screen.refresh()
+    print(status)
 
 def select_installs(curses_screen):
     """Main curses CLI function. Displays releases and allows to scroll through & select them"""
@@ -146,7 +146,10 @@ def select_installs(curses_screen):
     elif action == "down" and scroll_pos < len(all_python_releases):
         scroll_pos += 1
     elif action == "install":
+        curses.endwin()
         all_python_releases[scroll_pos].install()
+        start_cli()
+        return
     elif action == "exit":
         keep_running = False
 
@@ -156,10 +159,15 @@ def select_installs(curses_screen):
     if keep_running:
         select_installs(screen)
 
-# Download the releases
-with urlopen(SOURCE_DOWNLOADS) as site:
-    parser = PythonDownloadParser()
-    parser.feed(str(site.read()))
 
 # Start the CLI
-curses.wrapper(select_installs)
+def start_cli():
+    curses.wrapper(select_installs)
+
+if __name__ == "__main__":
+    # Download the releases
+    with urlopen(SOURCE_DOWNLOADS) as site:
+        parser = PythonDownloadParser()
+        parser.feed(str(site.read()))
+
+    start_cli()
