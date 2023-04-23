@@ -7,7 +7,7 @@ Leverages the gh-card project to create PNG repo cards. Because Google Docs does
 ## [python-installer.py](python-installer.py)
 Altinstall any Python3 version straight from the Python source, with no fuss.
 
-Either check out the script or, if you want a one-liner: `wget https://raw.githubusercontent.com/Denperidge/scripts/main/development/python-installer.py && python3 python-installer.py 
+Either check out the script or, if you want a one-liner: `wget https://raw.githubusercontent.com/Denperidge/scripts/main/development/python-installer.py && python3 python-installer.py`
 
 *Requirements:* make, any Python3 version
 
