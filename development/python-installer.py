@@ -19,11 +19,8 @@ The script will automatically...
 - Remove the previously downloaded source files
 
 Without any external dependencies!
-"""
 
-""" KNOWN ISSUES
-- No threading; the script freezes during an install, and status only gets updated when pressing buttons
-
+(Note: Python does require certain packages to be installed for https pip usage. See https://stackoverflow.com/a/49696062)
 """
 
 # Constants
@@ -52,26 +49,26 @@ class Release():
 
     
     def install(self):
-        update_status(f"Downloading {self.url}...")
+        print(f"Downloading {self.url}...")
 
         urlretrieve(self.url, self.tgz)
 
-        update_status(f"Extracting {self.tgz}...")
+        print(f"Extracting {self.tgz}...")
         with open(self.tgz, "r") as tarfile:
             tarfile.extractall(path=".")
             dir = tarfile.getmembers()[0].name
         
-        update_status(f"Extracted to {dir}")
+        print(f"Extracted to {dir}")
 
         for command in ["./configure", "make", ["sudo", "make", "altinstall"]]:
-            update_status(f"Running {command}...")
+            print(f"Running {command}...")
             run(command, cwd=dir)
         
-        update_status(f"Cleaning up tmp files for {self.tag}")
+        print(f"Cleaning up tmp files for {self.tag}")
         run(["sudo", "rm", "-rf", dir])
         remove(self.tgz)
             
-        update_status(f"Installed {self.tag}!")
+        print(f"Installed {self.tag}!")
     
     def __str__(self) -> str:
         return f"{self.name} ({self.url})"
@@ -113,18 +110,10 @@ def key_is_action(key: str):
         return "exit"
     else:
         return None
-    
-def update_status(status):
-    """Clears the curses CLI and displays the provided string"""
-    #screen.clear()
-    #screen.addstr(status)
-    #screen.refresh()
-    print(status)
 
-def select_installs(curses_screen):
+def select_installs(screen):
     """Main curses CLI function. Displays releases and allows to scroll through & select them"""
-    global scroll_pos, screen
-    screen = curses_screen
+    global scroll_pos
     keep_running = True
 
     
