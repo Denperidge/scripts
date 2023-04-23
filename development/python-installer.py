@@ -133,7 +133,7 @@ def select_installs(curses_screen):
 
     for version in all_python_releases[scroll_pos: scroll_pos+RELEASES_SCROLL_SIZE]:
         if all_python_releases.index(version) == scroll_pos:
-            screen.addstr(str(version), curses.A_BLINK)
+            screen.addstr("> " + str(version), curses.A_STANDOUT)
         else:
             screen.addstr(str(version))
         screen.addstr("\n")
