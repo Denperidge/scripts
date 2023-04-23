@@ -66,7 +66,7 @@ def prepend(filename):
     global previous_old_stem, previous_new_stem
     
     path = Path(filename).absolute() 
-    if path.name.startswith("IMG_"):
+    if path.name.startswith("IMG_") and not path.name.endswith("_original"):
 
         if apply and patch_before_prepend:
                 patch(path, extra_tags="")
@@ -176,7 +176,7 @@ def patch(path=None, extra_tags="-r"):
                 attributes_to_assign = '-api QuickTimeUTC "-DateTimeOriginal={0}"'
             
             # Remove date thing
-            name_without_prepend = path.stem.split("__")[1] if "__" in path.stem else path.stem
+            name_without_prepend = get_name_without_prepend(path)
             sibling_selector = str(path.with_name(f'*{name_without_prepend}*[!{path.suffix}]'))
 
             print("Searching using " + sibling_selector)
@@ -198,8 +198,17 @@ def patch(path=None, extra_tags="-r"):
                     print("No siblings found with the same model. Abort.")
                     exit(1)
                 elif len(siblings_with_the_same_model) > 1:
-                    print("Too many siblings with the same model. Abort.")
-                    exit(1)
+                    print("Too many siblings with the same model. Trying to find one with an identical name.")
+                    siblings_with_the_same_model_and_exact_name = [sibling for sibling in siblings_with_the_same_model if get_name_without_prepend(sibling) == name_without_prepend]
+                    if len(siblings_with_the_same_model_and_exact_name) == 0:
+                        print("No siblings found with the same model & exact name. Aborting.")
+                        exit(1)
+                    elif len(siblings_with_the_same_model_and_exact_name) > 1:
+                        print("Too many siblings with the same model & exact name. Aborting.")
+                        exit(1)
+                    else:
+                        sibling = siblings_with_the_same_model_and_exact_name[0]
+                        print(f"Found sibling with same model & name: {sibling}")
                 else:
                     sibling = siblings_with_the_same_model[0]
             else:
@@ -229,6 +238,9 @@ def patch(path=None, extra_tags="-r"):
 def get_attributes(path, attributes):
     return str(check_output(f'exiftool {attributes} "{path}"').decode("utf-8")).strip()
 
+def get_name_without_prepend(path):
+    path = Path(path)
+    return path.stem.split("__")[1] if "__" in path.stem else path.stem
 
 print(
     f"""
