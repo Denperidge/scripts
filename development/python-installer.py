@@ -84,7 +84,7 @@ class PythonDownloadParser(HTMLParser):
     """HTMLParser class to extract Python Release info from the website"""
     new_release = None
 
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+    def handle_starttag(self, tag: str, attrs: list) -> None:
         for key, value in attrs:
             if key == "href":
                 if value.startswith(RELEASE_STARTSWITH):
