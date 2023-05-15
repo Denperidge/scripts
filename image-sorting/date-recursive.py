@@ -7,9 +7,9 @@ from re import search, RegexFlag
 from datetime import datetime
 
 DIRECTORY = "D:/Pictures/**/*"
-DATE_FORMAT_STRING = "%Y%m%d_%H%M%S__"  # == yyyyMMdd_HHmmss__
+DATE_FORMAT_STRING = "%Y%m__"  # == yyyyMM__, previously yyyyMMdd_HHmmss__
 NAME_FORMATTED = r"[^a-z]{1,}_{2}"
-MODES = ["prepend", "undo", "patch"]
+MODES = ["prepend", "undo", "shorten", "patch"]
 
 ARG_ALLOWDIFF = "--allowdiff"
 
@@ -103,6 +103,23 @@ def prepend(filename):
     else:
         print(f"NOT processing {path.name}")
 
+def shorten():
+    length = int(input("Shorten prefix to length: "))
+    files = glob("**/*__*", recursive=True)
+    for fileglob in files:
+        file = Path(fileglob)
+        
+        before_prefix, after_prefix = file.name.split("__", maxsplit=1)
+        
+        new_prefix = before_prefix[:length]
+
+        new_name = file.with_name(new_prefix + "__" + after_prefix)
+        
+        print(f"{fileglob} -> {new_name}")
+
+        if apply:
+            file.rename(new_name)
+
 def undo(filename):
     path = Path(filename).absolute()
 
@@ -126,6 +143,7 @@ def undo(filename):
         if apply:
             try:
                 path.rename(new_path)
+                return new_path
             except FileExistsError as e:
                 if allow_rename_original_when_undoing:
                     print(f"""
@@ -247,7 +265,8 @@ print(
     This script can:
         {MODES[0]}: prepend {DATE_FORMAT_STRING} to files
         {MODES[1]}: remove that prepend
-        {MODES[2]}: normalize metadata from iCloud
+        {MODES[2]}: shorten set prefixes
+        {MODES[3]}: normalize metadata from iCloud
     """)
 
 if mode is None:
@@ -262,8 +281,11 @@ if mode == MODES[0]:
 # Undo prepend
 elif mode == MODES[1]:
     handle_file = undo
-# Patch iCloud metadata
 elif mode == MODES[2]:
+    shorten()
+    exit(0)
+# Patch iCloud metadata
+elif mode == MODES[3]:
     patch(str(provided_path))
     exit(0)
 
