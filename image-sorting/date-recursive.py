@@ -114,6 +114,10 @@ def shorten():
         new_prefix = before_prefix[:length]
 
         new_name = file.with_name(new_prefix + "__" + after_prefix)
+
+        if str(new_name) == str(file.name):
+            print("No prefix to shorten, skipping " + file.name)
+            continue
         
         print(f"{fileglob} -> {new_name}")
 
