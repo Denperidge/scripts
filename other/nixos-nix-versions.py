@@ -1,8 +1,6 @@
 from urllib.request import urlopen, HTTPError
 from re import compile, DOTALL, MULTILINE
 
-# NOTE: Is this, correct? Did 22.11 downgrade? I might be looking at the wrong branch
-
 nixos_versions = [    
     "24.05",
     "23.11",
