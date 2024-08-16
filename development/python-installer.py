@@ -102,7 +102,7 @@ def key_is_action(key: str):
     if key in ["KEY_UP", "KEY_PPAGE", "KEY_A2", "KEY_A3", "w", "W", "z", "Z", "8"]:
         return "up"
     # Arrow down, Page Down, Arrow down (Git Bash), Page Down (Git Bash), s, S, 5, 2
-    elif key in ["KEY_UP", "KEY_NPAGE", "KEY_C2", "KEY_C3", "s", "S", "5", "2"]:
+    elif key in ["KEY_DOWN", "KEY_NPAGE", "KEY_C2", "KEY_C3", "s", "S", "5", "2"]:
         return "down"
     elif key in ["I", "i"]:
         return "install"
