@@ -4,13 +4,20 @@
 14-04-2019: Jan-Piet Mens - Original script
 https://jpmens.net/2019/04/15/i-mirror-my-github-repositories-to-gitea/
 
-20-07-2025: Denperidge - forgejo rename, pipx & ConfigParser adaptation
+20-07-2025: Denperidge - forgejo rename, pipx, ConfigParser & include forks adaptation
 
 Usage:
 --------
   1. Save forgejo.github.py locally
   2. Create `forgejo-github.conf` in the same directory.
      See below for default contents
+  3. Get access tokens
+     Forgejo:
+       - https://git.example.com/user/settings/applications
+       - Enable repository read and write
+     GitHub:
+       - https://github.com/settings/personal-access-tokens/new
+       - Change Repository Access as desired
   3. Run `chmod +x forgejo-github.py`
   4. Run `./forgejo-github.py`
 
@@ -19,8 +26,12 @@ forgejo-github.conf template:
 -----------------------------
 FORGEJO_URL=https://git.example.com
 FORGEJO_TOKEN=your_token_here
+
 GITHUB_USERNAME=your_username_here
 GITHUB_TOKEN=another_token_here
+
+# Optional, remove leading # to enable
+#INCLUDE_FORKS=1  # Mirror forks. Defaults to 0 (False), set to 1 to enable
 """
 
 # pipx metadata
@@ -45,6 +56,7 @@ forgejo_token = config["FORGEJO_TOKEN"]
 github_username = config["GITHUB_USERNAME"]
 github_token = config["GITHUB_TOKEN"]
 
+include_forks = bool(int(config["INCLUDE_FORKS"])) if "INCLUDE_FORKS" in config else False
 
 session = requests.Session()        # Gitea
 session.headers.update({
@@ -59,12 +71,10 @@ if r.status_code != 200:
 
 forgejo_uid = json.loads(r.text)["id"]
 
-auth = Auth.Token(token)
-gh = Github(auth=auth)
+gh = Github(auth=Auth.Token(token))
 
 for repo in gh.get_user().get_repos():
-    # Mirror to Gitea/Forgejo if I haven't forked this repository from elsewhere
-    if not repo.fork:
+    if include_forks or not repo.fork:
         m = {
             "repo_name"         : repo.full_name.replace("/", "-"),
             "description"       : repo.description or "not really known",
