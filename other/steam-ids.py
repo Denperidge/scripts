@@ -12,7 +12,7 @@ from re import match, search
 from json import dump, load
 from requests import get
 
-APP_ID_RANGE = range(0, 200)
+APP_ID_RANGE = range(0, 201)
 
 SCRIPT_DIR = dirname(realpath(__file__))
 CACHE_FILE = join(SCRIPT_DIR, ".steam-id-cache.json")
@@ -37,24 +37,30 @@ def cache_and_print(req_url, title, setCache=True):
     else:
         print("[INFO]: No game found for {}".format(req_url))
 
+def parse_req_to_title(req_url, req):
+    search_for_title = search(TITLE_REGEX, req.text)
+    if search_for_title is not None:
+        title = search_for_title.group("title")
+        if title is not None:
+            cache_and_print(req_url, title)
+        else:
+            raise ValueError("[WARN]: Could not find title group for appId {}".format(app_id))
+    else:
+        raise ValueError("[WARN]: Could not find title element for appId {}".format(app_id))
+
+
 def app_info_from_steam(app_id, req_url):
     try:
         req = get(req_url)
         history_count = len(req.history)
 
         if history_count < 1:
-            search_for_title = search(TITLE_REGEX, req.text)
-            if search_for_title is not None:
-                title = search_for_title.group("title")
-                if title is not None:
-                    cache_and_print(req_url, title)
-                else:
-                    raise ValueError("[WARN]: Could not find title group for appId {}".format(app_id))
+            parse_req_to_title(req_url, req)
+        elif history_count == 1 and req.history[0].status_code == 302:
+            if req.url == "https://store.steampowered.com/":
+                cache_and_print(req_url, False)
             else:
-                raise ValueError("[WARN]: Could not find title element for appId {}".format(app_id))
-
-        elif history_count == 1 and req.history[0].status_code == 302 and req.url == "https://store.steampowered.com/":
-            cache_and_print(req_url, False)
+                parse_req_to_title(req_url, req)
         else:
             print(req.history)
             raise NotImplementedError("[ERR]: Didn't expect more than 2 redirects")
@@ -65,7 +71,10 @@ def app_info_from_steam(app_id, req_url):
         print(e)
     finally:
         req.close()
-        
+
+def save_cache():
+    with open(CACHE_FILE, "w", encoding="utf-8") as file:
+        dump(cache, file)
     
 if __name__ == "__main__":
     for app_id in APP_ID_RANGE:
@@ -78,6 +87,8 @@ if __name__ == "__main__":
             print("[INFO]: {} not found in cache".format(req_url))
             app_info_from_steam(app_id, req_url)
             sleep(1.2)
+        # Save every 5 app ids
+        if app_id % 5:
+            save_cache()
+    save_cache()
     
-    with open(CACHE_FILE, "w", encoding="utf-8") as file:
-        dump(cache, file)
