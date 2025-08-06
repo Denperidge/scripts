@@ -56,7 +56,7 @@ def app_info_from_steam(app_id, req_url):
 
         if history_count < 1:
             parse_req_to_title(req_url, req)
-        elif history_count == 1 and req.history[0].status_code == 302:
+        elif history_count <= 2 and req.history[0].status_code == 302:
             if req.url == "https://store.steampowered.com/":
                 cache_and_print(req_url, False)
             else:
@@ -65,6 +65,8 @@ def app_info_from_steam(app_id, req_url):
             print(req.history)
             raise NotImplementedError("[ERR]: Didn't expect more than 2 redirects")
     except NotImplementedError as e:
+        for request in req.history:
+            print(req.status_code, req.url)
         req.close()
         exit(1)
     except ValueError as e:
