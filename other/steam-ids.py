@@ -12,13 +12,13 @@ from re import match, search
 from json import dump, load
 from requests import get
 
-APP_ID_RANGE = range(0, 201)
+APP_ID_RANGE = range(0, 1000)
 
 SCRIPT_DIR = dirname(realpath(__file__))
 CACHE_FILE = join(SCRIPT_DIR, ".steam-id-cache.json")
 
 REQUEST_URL = "https://store.steampowered.com/app/"
-TITLE_REGEX = r"<title>(?P<title>.*?)( on Steam|)</title>"
+TITLE_REGEX = r"<title>(Save \d{1,3}% on |)(?P<title>.*?)( on Steam|)</title>"
 
 
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             app_info_from_steam(app_id, req_url)
             sleep(1.2)
         # Save every 5 app ids
-        if app_id % 5:
+        if app_id % 5 == 0:
             save_cache()
     save_cache()
     
