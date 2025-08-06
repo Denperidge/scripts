@@ -1,2 +1,3 @@
 forgejo-github.conf
 __pycache__
+.steam-id-cache.json
