@@ -7,6 +7,8 @@ remain in the original folder, unsorted, and you feel real silly
 
 Instead of moving them manually after the fact,
 let's automate it as much as possible!
+
+Requirements: python3
 """
 
 

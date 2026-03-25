@@ -3,6 +3,12 @@ from multiprocessing.reduction import duplicate
 from os import path, mkdir
 from shutil import move
 
+"""
+I forgot what I used this for but it was in the folder where MOVe.py was!
+
+Requirements: python3
+"""
+
 duplicate_folder = "Duplicates/"
 if not path.isdir(duplicate_folder):
     mkdir(duplicate_folder)

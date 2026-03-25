@@ -6,11 +6,16 @@ from os import remove
 from shutil import rmtree
 import curses
 
-""" A script to install other Python versions next to your existing installation without having to do things because I hate doing things """
+"""
+Altinstall any Python3 version straight from the source, with no fuss
 
+Requirements: linux, make, any existing python3 version
+Possible requirements:
+  - Certain packages may need to be installed for https pip usage. See https://stackoverflow.com/a/49696062)
+  - Some OS's may require a package for python ncurses usage
 
-""" FUNCTIONALITY
-
+FUNCTIONALITY
+-------------
 Simply run `python3 python-installer.py, and use the CLI to select a release!
 The script will automatically...
 - Download the tgz
@@ -18,9 +23,7 @@ The script will automatically...
 - Run ./configure - make - make altinstall
 - Remove the previously downloaded source files
 
-Without any external dependencies!
-
-(Note: Python does require certain packages to be installed for https pip usage. See https://stackoverflow.com/a/49696062)
+Without any module dependencies!
 """
 
 # Constants

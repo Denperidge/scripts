@@ -6,6 +6,17 @@ from subprocess import check_output
 from re import search, RegexFlag
 from datetime import datetime
 
+"""
+Recursively rename your images based on EXIF metadata!
+Made to ad-hoc an icloud export.
+
+Requirements: python3, exiftool in path
+
+Documentation too big for this header: https://github.com/Denperidge/scripts/blob/main/image-sorting/date-recursive.md
+Better option to use: metadata arg on https://github.com/icloud-photos-downloader/icloud_photos_downloader
+Issues: https://github.com/Denperidge/scripts/issues/1
+"""
+
 DIRECTORY = "D:/Pictures/**/*"
 DATE_FORMAT_STRING = "%Y%m__"  # == yyyyMM__, previously yyyyMMdd_HHmmss__
 NAME_FORMATTED = r"[^a-z]{1,}_{2}"

@@ -10,6 +10,7 @@ Turn a dconf directory into declarative NixOS settings
 
 Tip: use the dconf-editor application to easily view all directories
 
+Requirements: dconf, python3
 Example usage: ./dconf-to-nixos /org/nemo/preferences/
 Example output:
 {

@@ -1,8 +1,5 @@
-# Image sorting
-## [date-recursive.py](date-recursive.py)
+# [date-recursive.py](date-recursive.py)
 Recursively rename your images based on metadata!
-
-*Requirements:* Python3, exiftool in path
 
 | Modes   | Description                            |
 | ------- | -------------------------------------- |
@@ -27,15 +24,3 @@ python3 date-recursive.py patch D:/Pictures/@Photos/ --apply  # Uses --aply arg.
 
 python3 date-recursive.py undo --apply --startswith 202209  # Undo the prepend of files starting with 202209
 ```
-
-
-## [DELduplicates.py](DELduplicates.py)
-I forgot what I used this for but it was in the folder where MOVe.py was!
-
-*Requirements:* Python3
-
-## [MOVe.py](MOVe.py)
-(i)Phones now often take pictures in .JPG/.PNG as well as .MOV. So now I use Photosift to sort the images, and then run MOVe.py to move the .MOV's towards them!
-
-*Requirements:* Python3
-
