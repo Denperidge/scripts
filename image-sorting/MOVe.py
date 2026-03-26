@@ -1,7 +1,7 @@
 """
-MOVe.py
+Move your .MOV live photos after their still photo equivalent
 
-If sort images using a program like PhotoSift,
+If you sort images using a program like PhotoSift,
 you may subsequently have all your live photo MOV's
 remain in the original folder, unsorted, and you feel real silly
 

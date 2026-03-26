@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Leverages the gh-card project to create PNG repo cards
 # Because some document formats doesn't support SVG's.
