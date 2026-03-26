@@ -1,5 +1,12 @@
 #!/usr/bin/env -S pipx run
 
+"""
+Map steam ID's to game names in JSON!
+
+Requirements: pipx or python3 with the requests module installed
+Last update: 6 August 2025
+"""
+
 # pipx metadata
 # /// script
 # dependencies = ["requests"]

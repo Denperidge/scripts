@@ -1,6 +1,14 @@
 from urllib.request import urlopen, HTTPError
 from re import compile, DOTALL, MULTILINE
 
+"""
+Create a markdown table of NixOS versions,
+and their relating nix version
+
+Requirements: python3
+Last update: 26 July 2024
+"""
+
 nixos_versions = [    
     "24.05",
     "23.11",
