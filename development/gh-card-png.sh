@@ -3,9 +3,9 @@
 # Leverages the gh-card project to create PNG repo cards
 # Because some document formats doesn't support SVG's.
 #
-# Last update: 5 March 2023
 # Requirements: bash, wget, inkscape
 # External endpoints: https://gh-card.dev/
+# Last update: < 5 March 2023
 
 read -p 'User: ' user
 repo='Placeholder'

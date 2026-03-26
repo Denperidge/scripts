@@ -7,6 +7,7 @@ from shutil import move
 I forgot what I used this for but it was in the folder where MOVe.py was!
 
 Requirements: python3
+Last update: < 5 March 2023
 """
 
 duplicate_folder = "Duplicates/"

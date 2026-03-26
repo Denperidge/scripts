@@ -5,6 +5,7 @@ Sync your GitHub repos to Forgejo!
 
 Requirements: pipx or python3 with modules requests & PyGithub installed
 Future improvements: base off fork instead https://gist.github.com/jpmens/7690644643723577c8d1ee0450d0d82a
+Last update: 20 July 2025
 
 14-04-2019: Jan-Piet Mens
   - Original script

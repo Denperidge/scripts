@@ -6,6 +6,7 @@ If you're like me and postponed setting up ssh keys for way too long
 and now you have a bunch of servers to do it with, here you go!
 
 Requirements: linux, python3, openssh
+Last update: < 5 March 2023
 
 Workflow based on SSH setup tutorial: https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-2
 """

@@ -13,6 +13,8 @@ Requirements: linux, make, any existing python3 version
 Possible requirements:
   - Certain packages may need to be installed for https pip usage. See https://stackoverflow.com/a/49696062)
   - Some OS's may require a package for python ncurses usage
+Last update: 16 Augustus 2024
+Future improvements: https://github.com/Denperidge/scripts/issues/2
 
 FUNCTIONALITY
 -------------

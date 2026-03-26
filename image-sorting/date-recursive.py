@@ -12,6 +12,7 @@ Made to ad-hoc an icloud export.
 
 Requirements: python3, exiftool in path
 
+Last update: May 15, 2023
 Documentation too big for this header: https://github.com/Denperidge/scripts/blob/main/image-sorting/date-recursive.md
 Better option to use: metadata arg on https://github.com/icloud-photos-downloader/icloud_photos_downloader
 Issues: https://github.com/Denperidge/scripts/issues/1
