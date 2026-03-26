@@ -12,13 +12,18 @@ Some scripts that I have written that are too essential for a gist but too small
 | [python-installer.py](development/python-installer.py) | ⏰ Old script | Altinstall any Python3 version straight from the source, with no fuss |
 | [quick-multiple-ssh-key-setup.py](development/quick-multiple-ssh-key-setup.py) | ⏰ Old script | Quickly SSH key & ./.ssh/config |
 
+### ⏰ Old data gathering scripts
+| Script name | Description |
+| ----------- | ----------- |
+| [nixos-nix-versions.py](data-gathering/nixos-nix-versions.py) | Create a markdown table of NixOS versions and their relating nix version |
+| [steam-ids.py](data-gathering/steam-ids.py) | Map steam ID's to game names in JSON |
+
 ### ⏰ Old image sorting scripts
 | Script name | Description |
 | ----------- | ----------- |
 | [date-recursive.py](image-sorting/date-recursive.py) | Recursively rename your images based on EXIF metadata |
 | [MOVe.py](image-sorting/MOVe.py) | Move your .MOV live photos after their still photo equivalent |
 | [DELduplicates.py](image-sorting/DELduplicates.py) | I forgot what I used this for but it was in the folder where MOVe.py was! |
-
 
 ## Discussions
 ### Design decisions
