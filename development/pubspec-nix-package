@@ -1,0 +1,34 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i python3 -p yq
+
+# For packaging Flutter for nix:
+# pubspec.lock -> pubsec.lock.json & git-hashes.json
+#
+# Requirements: (nix) || (python3, yq)
+# Last update: 26 March 2026
+# Usage: with pubspec.lock in the current directory, run pubspec-nix-package
+
+
+from json import load, dump
+from os import system
+
+JSON_LOCK = "pubspec.lock.json"
+JSON_GIT_HASHES = "git-hashes.json"
+
+system("cat pubspec.lock | yq > " + JSON_LOCK)
+
+with open(JSON_LOCK, "r", encoding="UTF-8") as file:
+    data = load(file)
+
+packages = data["packages"]
+unhashed_packages = {}
+
+for package_name in packages:
+    description = packages[package_name]["description"]
+    if type(description) == str:
+        pass
+    elif "sha256" not in description.keys():
+        unhashed_packages[package_name] = ""
+
+with open(JSON_GIT_HASHES, "w", encoding="UTF-8") as file:
+    dump(unhashed_packages, file, indent=2)

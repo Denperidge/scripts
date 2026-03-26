@@ -6,6 +6,7 @@ Some scripts that I have written that are too essential for a gist but too small
 ### Development
 | Script name | Status | Description |
 | ----------- | ------ | ----------- |
+| [pubspec-nix-package](development/pubspec-nix-package) | ✅ Recently used | For packaging Flutter for nix: pubspec.lock -> pubsec.lock.json & git-hashes.json |
 | [yaml-to-json](development/yaml-to-json) | ✅ Recently used | Convert a yaml file to a json file |
 | [dconf-to-nixos](development/dconf-to-nixos) | ✅ Recently used | Turn a dconf directory into declarative NixOS settings |
 | [forgejo-github.py](development/forgejo-github.py) | 🛠️ Needs work | Sync your GitHub repos to Forgejo! |
