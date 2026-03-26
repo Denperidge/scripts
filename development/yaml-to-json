@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+# Convert a yaml file to a json file
+#
+# Requirements: sh, yq*
+# *: yq is not needed if nix is installed
+# Last update: 26 March 2026
+#
+
+if [ ! "$(command -v yq)" ]; then
+    prefix="nix-shell -p yq --run '"
+    suffix="'"
+fi
+
+sh -c "$prefix cat $1 | yq > ${1%.*}.json $suffix"
