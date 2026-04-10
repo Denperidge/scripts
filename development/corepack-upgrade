@@ -1,0 +1,28 @@
+#!/usr/bin/env nix-shell
+#! nix-shell -i bash -p jq curl gnused nodejs_24
+
+# Update the corepack deno & pnpm configuration
+# to their latest stable releases, adding a hash for packageManager
+#
+# Requirements: [nix] || [bash, sed, jq, curl, corepack]
+# Last update: 10 April 2026
+#
+
+data=$(cat package.json)
+
+get_latest() {
+    curl https://api.github.com/repos/$1/releases/latest | jq -r .tag_name | sed -e "s/v//"
+}
+
+# Get latest stable pnpm
+latest_pnpm=$(get_latest pnpm/pnpm)
+latest_deno=$(get_latest denoland/deno)
+echo $latest_pnpm
+echo $latest_deno
+echo $data | jq .devEngines.runtime.version=\"^$latest_deno\" | jq .packageManager=\"pnpm@${latest_pnpm}\" > package.json
+
+corepack up
+
+# For future usage of supporting multiple package managers
+#pkgMngr=$(echo $data | jq .packageManager -r | sed -e "s/@.*//")
+
