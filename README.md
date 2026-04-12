@@ -6,6 +6,7 @@ Some scripts that I have written that are too essential for a gist but too small
 ### Development
 | Script name | Status | Description |
 | ----------- | ------ | ----------- |
+| [update-repo](development/update-repo) | ✅ Recently used | Clone or update a repository to/within a target directory. If --copy arguments are provided, only update the provided paths to the target |
 | [corepack-upgrade](development/corepack-upgrade) | ✅ Recently used | Update the corepack deno & pnpm configuration to their latest stable releases, adding a hash for packageManager |
 | [pubspec-nix-package](development/pubspec-nix-package) | ✅ Recently used | For packaging Flutter for nix: pubspec.lock -> pubsec.lock.json & git-hashes.json |
 | [yaml-to-json](development/yaml-to-json) | ✅ Recently used | Convert a yaml file to a json file |
@@ -14,6 +15,11 @@ Some scripts that I have written that are too essential for a gist but too small
 | [gh-card-png.sh](development/gh-card-png.sh) | ✅ Recently tested | Leverages the gh-card project to create PNG repo cards |
 | [python-installer.py](development/python-installer.py) | ⏰ Old script | Altinstall any Python3 version straight from the source, with no fuss |
 | [quick-multiple-ssh-key-setup.py](development/quick-multiple-ssh-key-setup.py) | ⏰ Old script | Quickly SSH key & ./.ssh/config |
+
+### Shell Utils
+| Script name | Status | Description |
+| ----------- | ------ | ----------- |
+| [alacritty-run](shell-utils/alacritty-run) | ✅ Recently used | Script to create floating Alacritty windows with Niri |
 
 ### ⏰ Old data gathering scripts
 | Script name | Description |

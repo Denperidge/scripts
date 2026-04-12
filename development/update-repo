@@ -1,0 +1,101 @@
+#!/usr/bin/env python
+from os import makedirs
+from shutil import copy, copytree
+from pathlib import Path
+from sys import argv
+from subprocess import run
+from argparse import ArgumentParser
+
+"""
+Clone or update a repository to/within a target directory.
+If --copy arguments are provided, clone/update the repo to a
+temporary storage directory & copy the subpaths to the target directory
+
+Requirements: python3, git in path
+Last update: April 12, 2026
+
+Developer documentation:
+
+This script will differentiate between two kinds of plugins:
+- Singlet: a repository with only one plugins,
+           meant to be directly cloned into the plugins folder
+- Plural: a repository with multiple plugins
+          meant to be cloned elsewhere, moving specific (a) subdir(s)/file(s) into the plugins folder
+
+This script recognises a repo is a plural if --copy targets are defined
+
+The script handles them as follows:
+Singlet
+-------
+- New: clone to correct directory
+- Existing: pull new changes
+
+Plural
+------
+- New: clones plugin repo to --storage
+- Existing: pull new changes
+- Copies subdirectory/file to the correct directory
+"""
+
+def clone_or_update_repo(url, repo_dir):
+    if not repo_dir.exists():
+        print(f"Cloning {url} to {repo_dir}")
+        run(["git", "clone", url, repo_dir])
+    else:
+        print(f"Running git pull on {repo_dir}")
+        run(["git", "pull"], cwd=repo_dir)
+
+def main(clone_into, plural_hangout_spot, repo, plugin_subfiles=[], repo_dirname=""):
+    if repo_dirname == "":
+        repo_dirname = Path(repo).stem
+    if not clone_into.exists():
+        makedirs(clone_into)
+    if not plural_hangout_spot.exists():
+        makedirs(plural_hangout_spot)
+
+    # If no subdirs are provided, assume singlet
+    if len(plugin_subfiles) < 1:
+        repo_dir = clone_into.joinpath(repo_dirname)
+        clone_or_update_repo(repo, repo_dir)
+    else:  # Else, plural
+        # Clone to plural hangout spot
+        repo_dir = plural_hangout_spot.joinpath(repo_dirname)
+        clone_or_update_repo(repo, repo_dir)
+        
+        for match in plugin_subfiles:
+            #if "///" in match:
+            #    [match, target] = match.split("///")
+            #    match = ""
+            #else:
+            #    target_name = file.name
+            files = repo_dir.glob(f"*{match}*")
+            for file in files:
+                file_target = clone_into.joinpath(file.name)
+                print(f"Copying {file.name}:\n\tfrom {repo_dir}\n\tto {file_target}...\n")
+                if file.is_dir():
+                    copytree(file.absolute(), file_target, dirs_exist_ok=True)
+                else:
+                    copy(file.absolute(), file_target)
+
+def with_prefix(prefix, items):
+    new_items = []
+    for item in items:
+        new_items.append(prefix + item)
+    return new_items
+
+if __name__ == "__main__":
+    parser = ArgumentParser(
+        prog="update-repo",
+        description="""Clone or update a repository to/within a target directory.
+        If --copy arguments are provided, clone/update the repo to a temporary storage directory
+        & copy the subpaths to the target directory. Requires git to be installed""",
+        usage="./update-repo -r https://github.com/linuxmint/cinnamon-spices-actions.git -s /tmp/repo-cache/ -c send-to-printer@rcalixte/CHANGELOG.md backup-this-file@h3nr1ke -d ~/.local/share/nemo/actions")
+    parser.add_argument("--repo", "-r", help="Repository to clone. Example usage: --repo https://github.com/linuxmint/cinnamon-spices-actions.git", required=True)
+    parser.add_argument("--storage", "-s", help="Directory to store the repository to, in case only certain files need to be copied. Default: '/tmp/update-repo-store/'. Example usage: --storage /tmp/update-repo-store/", default="/tmp/update-repo-store/", required=("-f" in argv or "--file" in argv))
+    parser.add_argument("--copy", "-c", nargs="*", help="Relative path from repository root to copy. Example usage: -c send-to-printer@rcalixte/CHANGELOG.md backup-this-file@h3nr1ke", default=[])
+    parser.add_argument("--destination", "-d", help="Directory to clone repository to, or directory to copy paths defined using --copy to. Example usage: -d ~/.local/share/nemo/actions", required=True)
+
+    args = parser.parse_args()
+    
+    main(Path(args.destination), Path(args.storage), args.repo, args.copy)
+

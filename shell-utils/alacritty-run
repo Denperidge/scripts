@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+# Script to create floating Alacritty windows with Niri
+#
+# Example Niri config
+# -------------------
+# window-rule {
+#     match app-id=r"^Alacritty$" title=r#"^Float:"#
+#     default-floating-position x=10 y=15 relative-to="top-right"
+#     default-column-width { fixed 200; }
+#     default-window-height { fixed 60; }
+# }
+#
+
+alacritty -t "Float: $1" -e sh -c "$2 && sleep 2"
