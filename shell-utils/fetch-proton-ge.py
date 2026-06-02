@@ -3,6 +3,7 @@ from urllib.request import urlopen, urlretrieve
 from subprocess import run
 from json import load, loads, dump
 from typing import Callable
+from os import remove
 import curses
 
 """
@@ -124,7 +125,13 @@ class Release():
             if input("[Y/n]: ").lower() != "n":
                 raise ValueError("Abandonded installation due to checksum problems")
 
-        
+        command = f"tar -xzvf {target.name}"
+        print(f"Running {command} in {steam_dir}...")
+        run(command, shell=True, cwd=steam_dir, encoding="UTF-8")
+
+        print(f"Done installing {self.name}! Removing {target.name}...")
+        remove(target)
+        print("Done! Exiting...")
 
     def __str__(self):
         return self.name
@@ -176,11 +183,8 @@ def select_release(screen: curses.window, releases: list[Release]):
     elif action == "down" and scroll_pos < len(releases):
         scroll_pos += 1
     elif action == "install":
-        curses.endwin()
-        releases[scroll_pos].install()
-        input()
-        start_tui(releases)
-        return
+        screen.refresh()
+        return releases[scroll_pos]
     elif action == "exit":
         keep_running = False
 
@@ -190,10 +194,13 @@ def select_release(screen: curses.window, releases: list[Release]):
     if keep_running:
         select_release(screen, releases)
     
-def start_tui(releases: list[Release]):  # TODO open on github
-    curses.wrapper(select_release, releases)  # TODO remove global screen var
-
+def start_tui(releases: list[Release]) -> Release:  # TODO open on github
+    return curses.wrapper(select_release, releases)  # TODO remove global screen var
+    
 if __name__ == "__main__":
     releases = get_proton_ge_releases()
 
-    start_tui(releases)
+    release = start_tui(releases)
+    release.install()
+
+# TODO further pages of releases
