@@ -1,41 +1,45 @@
 from pathlib import Path
 from urllib.request import urlopen, urlretrieve
 from subprocess import run
-from json import load, dump
-from tempfile import TemporaryFile
+from json import load, loads, dump
+from typing import Callable
 import curses
 
 """
 Download & extract proton-ge to the correct Steam location
 with a simple terminal script
 
-Developed for Linux, but should work on other OS's
+Requirements: any existing python3 version, tar command
+
+Developed for non-flatpak Linux,
+but should work on other setups with some adapting
 """
 
 REPO = "GloriousEggroll/proton-ge-custom"
 RELEASES_API_URL = f"https://api.github.com/repos/{REPO}/releases"
-RELEASES_SCROLL_SIZE = 5
 CACHE = Path("proton-ge-cache.json")
 
 scroll_pos = 0  # (Start) scroll position
 screen = None  # Curses screen, for use with 
 
-def checksum_is_equal_to(file: Path, checksum: str):
-    if run("sha512sum --help", shell=True).returncode != 0:
+def checksum_is_equal_to(file: Path, checksum: str) -> bool:
+    if run("sha512sum --help", shell=True, capture_output=True).returncode != 0:
         print("WARNING: Could not find sha256sum in PATH. Skipping checksum verification")
         return True
     else:
-        print("Calculating checksum...")
-        file_checksum = run(f"sha512sum '{file.absolute()}'", shell=True, capture_output=True).stdout
-        print(f"Checksum: '{file_checksum}'")
-        exit()
+        command = f"sha512sum '{file.name}'"
+        print(f"Calculating checksum using {command}...")
+        file_checksum = run(command, shell=True, cwd=file.parent, capture_output=True).stdout.decode("utf-8")
+        print(f"sha512sum from local file: '{file_checksum}'")
+        return file_checksum == checksum
 
 def cache_request(url: str):
     # Check if cache exists
     cache_exists = CACHE.exists()
     if not cache_exists:  # TODO check cache age
+        cache = {"releases": {}}
         with CACHE.open("w", encoding="utf-8") as file:
-            dump({"releases": []}, file)
+            dump(cache, file)
     else:
         # Read cache
         with CACHE.open("r", encoding="utf-8") as cache_file:
@@ -44,8 +48,8 @@ def cache_request(url: str):
     # If the cache is empty or the requested url is not in the cache 
     if not cache_exists or url not in cache["releases"].keys():
         # Request...
-        with urlopen(url) as data:
-            cache["releases"][url] = req
+        with urlopen(url) as req:
+            cache["releases"][url] = req.read().decode("utf-8")
         # ...and cache
         with CACHE.open("w", encoding="utf-8") as cache_file:
             dump(cache, cache_file)
@@ -59,12 +63,20 @@ def get_steam_compattools_dir() -> Path:
     if default_path.exists():
         return default_path
     else:
-        print("Please enter the path to your steam compatibilitytools.d directory")
-        path = Path(input("Path: "))
-        if path.exists():
-            return path
+        print(f"Destination proton folder doesn't exist! Create {default_path}?")
+        create_folder = input("[Y/n]: ").lower() != "n"
+        
+        if create_folder:
+            from os import makedirs
+            makedirs(default_path)
+            return default_path
         else:
-            raise FileNotFoundError("The provided path does not exist")
+            print("Please enter the path to your steam compatibilitytools.d directory")
+            path = Path(input("Path: "))
+            if path.exists():
+                return path
+            else:
+                raise FileNotFoundError("The provided path does not exist")
 
 class Release():
     def __init__(self, raw_data: object):
@@ -82,7 +94,10 @@ class Release():
             asset_name: str = asset["name"]
             if asset_name.endswith(".tar.gz"):
                 # Is proton itself
-                self.targz = asset["browser_download_url"]
+                self.targz = {
+                    "name": asset["name"],
+                    "url": asset["browser_download_url"]
+                }
             elif asset_name.endswith(".sha512sum"):
                 self.checksum = asset["browser_download_url"]
             elif asset_name.endswith(".tar.zst") or asset_name == "SHA256SUMS":
@@ -91,19 +106,32 @@ class Release():
                 raise NotImplementedError(f"Unexpected file (format) from file {asset_name}")
     
     def get_checksum(self):
-        checksum = cache_request(self.checksum).read().decode("utf-8")
+        checksum = cache_request(self.checksum)
         
-        print(f"Expected checksum: '{checksum}'")
+        print(f"sha512sum from upstream: '{checksum}'")
         return checksum
 
     def install(self):
-        self.get_checksum()
+        steam_dir = get_steam_compattools_dir()
+        target = steam_dir.joinpath(self.targz["name"])
+        
+        print(f"Please wait! Downloading {self.name} to {target}...")
+        urlretrieve(self.targz["url"], target)
+
+        checksum_matches = checksum_is_equal_to(target, self.get_checksum())
+        if not checksum_matches:
+            print("The downloaded file has a different checksum than is expected from the GitHub release. Cancel installation?")
+            if input("[Y/n]: ").lower() != "n":
+                raise ValueError("Abandonded installation due to checksum problems")
+
+        
 
     def __str__(self):
         return self.name
 
 def get_proton_ge_releases() -> list[Release]:
-    releases = load(cache_request(RELEASES_API_URL))
+    print(cache_request(RELEASES_API_URL))
+    releases = loads(cache_request(RELEASES_API_URL))
     return list(map(lambda release: Release(release), releases))
 
 # TUI
@@ -130,8 +158,8 @@ def select_release(screen: curses.window, releases: list[Release]):
 
     scroll_size = screen.getmaxyx()[0] - 4  # -4 for ui elements
     
-    screen.addstr("\t[ARROW_UP/PAGE_UP] Move up\t\t[I] Install\t\t[O] Open on GitHub\t\n", curses.A_REVERSE)
-    screen.addstr("\t[ARROW_DOWN/PAGE_DOWN] Move down\t[E] Exit\t\n\n", curses.A_REVERSE)
+    screen.addstr("\t[ARROW_UP/PAGE_UP] Move up\t[I] Install\t[O] Open on GitHub\t\n", curses.A_REVERSE)
+    screen.addstr("\t[ARROW_DOWN/PAGE_DOWN] Move down\t[E] Exit\t\t\t\n\n", curses.A_REVERSE)
 
     for release in releases[scroll_pos:scroll_pos+scroll_size]:
         if releases.index(release) == scroll_pos:
