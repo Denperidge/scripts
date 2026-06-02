@@ -157,21 +157,34 @@ def key_is_action(key: str):
     else:
         return None
 
-releases: list[Release] = list()
-def select_release(screen: curses.window, page=1) -> Release:
+page = 1
+def select_release(screen: curses.window, releases: list[Release]) -> Release:
     global scroll_pos
-    global releases
+    global page
     """Main curses CLI function. Displays releases and allows to scroll through & select them"""
     keep_running = True
 
-    scroll_size = screen.getmaxyx()[0] - 4  # -4 for ui elements
+    scroll_size = screen.getmaxyx()[0] - 5  # -5 for ui elements
     
-    screen.addstr("\t[ARROW_UP] Move up\t[I] Install\t[O] Open on GitHub\t\n", curses.A_REVERSE)
-    screen.addstr("\t[ARROW_DOWN/PAGE_DOWN] Move down\t[E] Exit\t\t\t\n\n", curses.A_REVERSE)
+    if len(releases) == 0:  # Initialize
+        releases = get_proton_ge_releases(scroll_size*3, page)
+    """
+    - 1 (scroll pos)
+    - 2
+    - 3
+    ------- scroll size 3, initial view. After this scroll pos, load
+    - 4
+    - 5
+    - 6 (6 loaded releases)
+    """
+    if scroll_pos == len(releases) - scroll_size + 1:
+        page += 1  # TODO can scroll_size schange unexpelctedly?
+        releases += get_proton_ge_releases(page_size=scroll_size * 3, page=page)
 
-    if page not in release_cache.keys():
-        release_cache[page] = get_proton_ge_releases(page_size=scroll_size, page=page)
-    releases = release_cache[page]
+    screen.addstr("\t[ARROW_UP/PAGE_UP] Move up\t[I] Install\t[O] Open on GitHub\t\n", curses.A_REVERSE)
+    screen.addstr("\t[ARROW_DOWN/PAGE_DOWN] Move down\t[E] Exit\t\t\t\n", curses.A_REVERSE)
+    screen.addstr(f"\tSCROLL POS: {scroll_pos}\tLOADED RELEASES: {len(releases)}\tPAGE: {page}\t\t\t\n\n", curses.A_REVERSE)
+
 
     for release in releases[scroll_pos:scroll_pos+scroll_size]:
         if releases.index(release) == scroll_pos:
@@ -187,26 +200,26 @@ def select_release(screen: curses.window, page=1) -> Release:
         scroll_pos -= 1
     elif action == "down" and scroll_pos < len(releases):
         scroll_pos += 1
-    elif action == "down" and scroll_pos == len(releases):
-        pass
     elif action == "install":
-        screen.refresh()
         return releases[scroll_pos]
     elif action == "exit":
         keep_running = False
+        return None
 
     screen.refresh()
     screen.clear()
 
     if keep_running:
-        select_release(screen, page)
+        return select_release(screen, releases)
     
 def start_tui() -> Release:  # TODO open on github
-    return curses.wrapper(select_release)  # TODO remove global screen var
+    return curses.wrapper(select_release, [])  # TODO remove global screen var
     
 if __name__ == "__main__":
+    #releases = get_proton_ge_releases()
     release = start_tui()
-    release.install()
+    if release:
+        release.install()
 
 # TODO ask to clear cache
 
