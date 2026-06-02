@@ -1,7 +1,8 @@
 from pathlib import Path
-from urllib.request import urlopen
+from urllib.request import urlopen, urlretrieve
 from subprocess import run
-from json import load
+from json import load, dump
+from tempfile import TemporaryFile
 import curses
 
 """
@@ -14,9 +15,56 @@ Developed for Linux, but should work on other OS's
 REPO = "GloriousEggroll/proton-ge-custom"
 RELEASES_API_URL = f"https://api.github.com/repos/{REPO}/releases"
 RELEASES_SCROLL_SIZE = 5
+CACHE = Path("proton-ge-cache.json")
 
 scroll_pos = 0  # (Start) scroll position
 screen = None  # Curses screen, for use with 
+
+def checksum_is_equal_to(file: Path, checksum: str):
+    if run("sha512sum --help", shell=True).returncode != 0:
+        print("WARNING: Could not find sha256sum in PATH. Skipping checksum verification")
+        return True
+    else:
+        print("Calculating checksum...")
+        file_checksum = run(f"sha512sum '{file.absolute()}'", shell=True, capture_output=True).stdout
+        print(f"Checksum: '{file_checksum}'")
+        exit()
+
+def cache_request(url: str):
+    # Check if cache exists
+    cache_exists = CACHE.exists()
+    if not cache_exists:  # TODO check cache age
+        with CACHE.open("w", encoding="utf-8") as file:
+            dump({"releases": []}, file)
+    else:
+        # Read cache
+        with CACHE.open("r", encoding="utf-8") as cache_file:
+            cache = load(cache_file)
+
+    # If the cache is empty or the requested url is not in the cache 
+    if not cache_exists or url not in cache["releases"].keys():
+        # Request...
+        with urlopen(url) as data:
+            cache["releases"][url] = req
+        # ...and cache
+        with CACHE.open("w", encoding="utf-8") as cache_file:
+            dump(cache, cache_file)
+            
+    # Return req as-is from cache        
+    return cache["releases"][url]
+        
+
+def get_steam_compattools_dir() -> Path:
+    default_path: Path = Path().home().joinpath(".steam/steam/compatibilitytools.d/")
+    if default_path.exists():
+        return default_path
+    else:
+        print("Please enter the path to your steam compatibilitytools.d directory")
+        path = Path(input("Path: "))
+        if path.exists():
+            return path
+        else:
+            raise FileNotFoundError("The provided path does not exist")
 
 class Release():
     def __init__(self, raw_data: object):
@@ -34,40 +82,29 @@ class Release():
             asset_name: str = asset["name"]
             if asset_name.endswith(".tar.gz"):
                 # Is proton itself
-                self.targz = asset["url"]
+                self.targz = asset["browser_download_url"]
             elif asset_name.endswith(".sha512sum"):
-                self.checksum = asset["url"]
+                self.checksum = asset["browser_download_url"]
             elif asset_name.endswith(".tar.zst") or asset_name == "SHA256SUMS":
                 continue
             else:
                 raise NotImplementedError(f"Unexpected file (format) from file {asset_name}")
+    
+    def get_checksum(self):
+        checksum = cache_request(self.checksum).read().decode("utf-8")
         
+        print(f"Expected checksum: '{checksum}'")
+        return checksum
+
+    def install(self):
+        self.get_checksum()
+
     def __str__(self):
         return self.name
 
 def get_proton_ge_releases() -> list[Release]:
-    with urlopen(RELEASES_API_URL) as req:
-        releases = load(req)
-    
+    releases = load(cache_request(RELEASES_API_URL))
     return list(map(lambda release: Release(release), releases))
-
-
-
-def get_steam_compattools_dir():
-    Path().home()
-
-
-def download_release():
-    pass
-
-def checksum_is_equal_to(file: Path, ):
-    if run("sha256sum --help", shell=True).returncode != 0:
-        print("WARNING: Could not find sha256sum in PATH. Skipping checksum verification")
-        return True
-    else:
-        print("Calculating checksum...")
-        return False
-
 
 # TUI
 def key_is_action(key: str):
@@ -93,7 +130,7 @@ def select_release(screen: curses.window, releases: list[Release]):
 
     scroll_size = screen.getmaxyx()[0] - 4  # -4 for ui elements
     
-    screen.addstr("\t[ARROW_UP/PAGE_UP] Move up\t\t[I] Install\t\n", curses.A_REVERSE)
+    screen.addstr("\t[ARROW_UP/PAGE_UP] Move up\t\t[I] Install\t\t[O] Open on GitHub\t\n", curses.A_REVERSE)
     screen.addstr("\t[ARROW_DOWN/PAGE_DOWN] Move down\t[E] Exit\t\n\n", curses.A_REVERSE)
 
     for release in releases[scroll_pos:scroll_pos+scroll_size]:
@@ -112,8 +149,9 @@ def select_release(screen: curses.window, releases: list[Release]):
         scroll_pos += 1
     elif action == "install":
         curses.endwin()
-        all_python_releases[scroll_pos].install()
-        start_cli()
+        releases[scroll_pos].install()
+        input()
+        start_tui(releases)
         return
     elif action == "exit":
         keep_running = False
@@ -124,8 +162,8 @@ def select_release(screen: curses.window, releases: list[Release]):
     if keep_running:
         select_release(screen, releases)
     
-def start_tui(releases: list[Release]):
-    curses.wrapper(select_release, releases)
+def start_tui(releases: list[Release]):  # TODO open on github
+    curses.wrapper(select_release, releases)  # TODO remove global screen var
 
 if __name__ == "__main__":
     releases = get_proton_ge_releases()
