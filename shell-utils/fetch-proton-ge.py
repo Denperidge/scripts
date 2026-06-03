@@ -37,7 +37,8 @@ Features:
 - Caches requests for a day & custom path location if needed
 
 TODO/possible improvements:
-- Optimise cache: store less JSON data 
+- Optimise cache: store less JSON data
+- Better y/n input asks (1 key press with no newline)
 - Support for macOS
 - Support for xdg_open alternative for non-xdg environments
 """
@@ -114,7 +115,7 @@ def cache_request(url: str):
 def cache_ask_to_clear():
     print(f"Do you want to remove the cache file at {CACHE_PATH.absolute()} ?")
     print("This is not recommended if you're gonna use this script again soon")
-    if input("[y/N]: ").lower() == "y":
+    if input("[Y/n]: ").lower() != "n":
         remove(CACHE_PATH)
         print("Cache file removed")
 
