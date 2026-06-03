@@ -212,13 +212,12 @@ def select_release(screen: curses.window, target_dir: Path, releases: list[Relea
     - 6 (6 loaded releases)
     """
     if scroll_pos == len(releases) - scroll_size + 1:
-        page += 1  # TODO can scroll_size schange unexpelctedly?
+        page += 1  # TODO can scroll_size schange unexpelctedly? - yes
         releases += get_proton_ge_releases(page_size=scroll_size * 3, page=page)
 
-    screen.addstr("\t[ARROW_UP/PAGE_UP] Move up\t[I] Install\t[O] Open on GitHub\t\n", curses.A_REVERSE)
-    screen.addstr("\t[ARROW_DOWN/PAGE_DOWN] Move down\t[E] Exit\t\t\t\n", curses.A_REVERSE)
-    screen.addstr(f"\tSCROLL POS: {scroll_pos}\tLOADED RELEASES: {len(releases)}\t[T] Open target directory\t\t\t\n\n", curses.A_REVERSE)
-
+    screen.addstr(" [ARROW_UP/PAGE_UP] Move up\t\t[I] Install\t[E] Exit  \n", curses.A_REVERSE)
+    screen.addstr(" [ARROW_DOWN/PAGE_DOWN] Move down\t[O] Open on GitHub        \n", curses.A_REVERSE)
+    screen.addstr(f" SCROLL POS: {scroll_pos}\tLOADED RELEASES: {len(releases)}\t[T] Open target directory \n\n", curses.A_REVERSE)
 
     for release in releases[scroll_pos:scroll_pos+scroll_size]:
         if releases.index(release) == scroll_pos:
