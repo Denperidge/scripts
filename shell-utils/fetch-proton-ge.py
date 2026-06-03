@@ -168,6 +168,9 @@ def get_proton_ge_releases(page_size: int, page: int=1) -> list[Release]:
     return list(map(lambda release: Release(release), releases))
 
 # TUI
+def xdg_open(target: str):
+    run(f"xdg-open '{target}'", shell=True, capture_output=True, start_new_session=True)
+
 def key_is_action(key: str):
     """ Converts multiple keys to the same string, to allow multiple controls for the same function """
 
@@ -183,11 +186,13 @@ def key_is_action(key: str):
         return "exit"
     elif key in ["O", "o"]:
         return "open"
+    elif key in ["T", "t"]:
+        return "target"
     else:
         return None
 
 page = 1
-def select_release(screen: curses.window, releases: list[Release]) -> Release:
+def select_release(screen: curses.window, target_dir: Path, releases: list[Release]) -> Release:
     global scroll_pos
     global page
     """Main curses CLI function. Displays releases and allows to scroll through & select them"""
@@ -212,7 +217,7 @@ def select_release(screen: curses.window, releases: list[Release]) -> Release:
 
     screen.addstr("\t[ARROW_UP/PAGE_UP] Move up\t[I] Install\t[O] Open on GitHub\t\n", curses.A_REVERSE)
     screen.addstr("\t[ARROW_DOWN/PAGE_DOWN] Move down\t[E] Exit\t\t\t\n", curses.A_REVERSE)
-    screen.addstr(f"\tSCROLL POS: {scroll_pos}\tLOADED RELEASES: {len(releases)}\tPAGE: {page}\t\t\t\n\n", curses.A_REVERSE)
+    screen.addstr(f"\tSCROLL POS: {scroll_pos}\tLOADED RELEASES: {len(releases)}\t[T] Open target directory\t\t\t\n\n", curses.A_REVERSE)
 
 
     for release in releases[scroll_pos:scroll_pos+scroll_size]:
@@ -232,7 +237,9 @@ def select_release(screen: curses.window, releases: list[Release]) -> Release:
     elif action == "install":
         return releases[scroll_pos]
     elif action == "open":
-        run(f"xdg-open {releases[scroll_pos].url}", shell=True)
+        xdg_open(releases[scroll_pos].url)
+    elif action == "target":
+        xdg_open(target_dir.absolute())
     elif action == "exit":
         keep_running = False
         return None
@@ -241,15 +248,15 @@ def select_release(screen: curses.window, releases: list[Release]) -> Release:
     screen.clear()
 
     if keep_running:
-        return select_release(screen, releases)
+        return select_release(screen, target_dir, releases)
     
-def start_tui() -> Release:  # TODO open on github
-    return curses.wrapper(select_release, [])
+def start_tui(target_dir: Path) -> Release:  # TODO open on github
+    return curses.wrapper(select_release, target_dir, [])
     
 if __name__ == "__main__":
     cache_load()
     target_dir = get_steam_compattools_dir()
-    release = start_tui()
+    release = start_tui(target_dir)
     if release:
         release.install(target_dir)
 # TODO ask to clear cache
