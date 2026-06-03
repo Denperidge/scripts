@@ -19,6 +19,8 @@ Some scripts that I have written that are too essential for a gist but too small
 ### Shell Utils
 | Script name | Status | Description |
 | ----------- | ------ | ----------- |
+| [fetch-proton-ge.py](shell-utils/fetch-proton-ge.py) | ✅ Recently used | Download & extract proton-ge to the correct Steam location
+with a simple terminal script |
 | [alacritty-run](shell-utils/alacritty-run) | ✅ Recently used | Script to create floating Alacritty windows with Niri |
 
 ### ⏰ Old data gathering scripts
