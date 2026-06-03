@@ -4,6 +4,7 @@ from subprocess import run
 from json import load, loads, dump
 from typing import Callable
 from os import remove
+from datetime import datetime
 import curses
 
 """
@@ -23,6 +24,9 @@ CACHE = dict()
 
 scroll_pos = 0  # (Start) scroll position
 
+def now():
+    return datetime.now().strftime("%d-%m-%y")
+
 def checksum_is_equal_to(file: Path, checksum: str) -> bool:
     if run("sha512sum --help", shell=True, capture_output=True).returncode != 0:
         print("WARNING: Could not find sha256sum in PATH. Skipping checksum verification")
@@ -37,13 +41,18 @@ def checksum_is_equal_to(file: Path, checksum: str) -> bool:
 def cache_load():
     global CACHE
     # Load cache if needed
-    if not CACHE_PATH.exists():  # TODO check cache age
-        CACHE = {"releases": {}}
+    if not CACHE_PATH.exists():
+        CACHE = {"releases": {}, "date": now()}
         with CACHE_PATH.open("w", encoding="utf-8") as file:
             dump(CACHE, file)
     else:
         with CACHE_PATH.open("r", encoding="utf-8") as cache_file:
             CACHE = load(cache_file)
+            current_date = now()
+            if CACHE["date"] != current_date:
+                print("Old cache! Clearing releases...")
+                cache("releases", value={})
+                cache("date", value=current_date)
 
 def cache(key: str, subkey: str=None, value: any=None) -> any:
     if value is None:
@@ -86,7 +95,7 @@ def get_steam_compattools_dir() -> Path:
         # Otherwise, continue
     
     # Check default path
-    default_path: Path = Path().home().joinpath("s.steam/steam/compatibilitytools.d/")
+    default_path: Path = Path().home().joinpath(".steam/steam/compatibilitytools.d/")
     if default_path.exists():
         return default_path
     else:
@@ -249,7 +258,7 @@ def select_release(screen: curses.window, target_dir: Path, releases: list[Relea
     if keep_running:
         return select_release(screen, target_dir, releases)
     
-def start_tui(target_dir: Path) -> Release:  # TODO open on github
+def start_tui(target_dir: Path) -> Release:
     return curses.wrapper(select_release, target_dir, [])
     
 if __name__ == "__main__":
