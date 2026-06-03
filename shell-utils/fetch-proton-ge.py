@@ -50,7 +50,7 @@ def cache(key: str, subkey: str=None, value: any=None) -> any:
     if value is None:
         # Get from cache
         if not subkey:
-            return CACHE[key]
+            return CACHE.get(key, None)
         else:
             return CACHE[key][subkey]
     else:
@@ -76,10 +76,22 @@ def cache_request(url: str):
         
 
 def get_steam_compattools_dir() -> Path:
-    default_path: Path = Path().home().joinpath(".steam/steam/compatibilitytools.d/")
+    # Get from cache if possible
+    cached_value = cache("target")
+    if cached_value:
+        # Parse cache
+        cached_value = Path(cached_value)
+        # Return if the path exists
+        if cached_value.exists():
+            return cached_value
+        # Otherwise, continue
+    
+    # Check default path
+    default_path: Path = Path().home().joinpath("s.steam/steam/compatibilitytools.d/")
     if default_path.exists():
         return default_path
     else:
+        # Otherwise, ask to create path
         print(f"Destination proton folder doesn't exist! Create {default_path}?")
         create_folder = input("[Y/n]: ").lower() != "n"
         
@@ -88,10 +100,13 @@ def get_steam_compattools_dir() -> Path:
             makedirs(default_path)
             return default_path
         else:
+            # Otherwise, ask for a path
             print("Please enter the path to your steam compatibilitytools.d directory")
             path = Path(input("Path: "))
             if path.exists():
-                return path
+                # Cache the custom path as str
+                cache("target", value=str(path.absolute()))
+                return path  # & return the Path
             else:
                 raise FileNotFoundError("The provided path does not exist")
 
