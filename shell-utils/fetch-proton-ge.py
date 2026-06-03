@@ -115,12 +115,9 @@ class Release():
         self.name = raw_data["tag_name"]
         print(f"Parsing {self.name}...")
 
-        # Asset parsing
-        #assets = list(filter(
-        #    lambda asset: asset["name"].split(".", 1)[1] not in ("tar.zst"), raw_data["assets"]))
-        #assert len(assets) == 2
-        assets = raw_data["assets"]
+        self.url = raw_data["html_url"]
 
+        assets = raw_data["assets"]
         for asset in assets:
             asset_name: str = asset["name"]
             if asset_name.endswith(".tar.gz"):
@@ -184,6 +181,8 @@ def key_is_action(key: str):
         return "install"
     elif key in ["E", "e"]:
         return "exit"
+    elif key in ["O", "o"]:
+        return "open"
     else:
         return None
 
@@ -232,6 +231,8 @@ def select_release(screen: curses.window, releases: list[Release]) -> Release:
         scroll_pos += 1
     elif action == "install":
         return releases[scroll_pos]
+    elif action == "open":
+        run(f"xdg-open {releases[scroll_pos].url}", shell=True)
     elif action == "exit":
         keep_running = False
         return None
@@ -252,3 +253,4 @@ if __name__ == "__main__":
     if release:
         release.install(target_dir)
 # TODO ask to clear cache
+# TODO optimise cache 
