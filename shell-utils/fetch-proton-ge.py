@@ -25,6 +25,9 @@ Last update: 3 June 2026
 Example usage: python3 ./fetch-proton-ge.py
 Source: https://github.com/Denperidge/scripts
 
+Download script:
+curl -O https://raw.githubusercontent.com/Denperidge/scripts/refs/heads/main/shell-utils/fetch-proton-ge.py
+
 Features:
 - Handles the following automatically:
     - Downloading & extracting the the .tar.gz archive
