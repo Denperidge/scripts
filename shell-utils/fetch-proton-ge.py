@@ -18,7 +18,8 @@ but should work on other setups with some adapting
 
 REPO = "GloriousEggroll/proton-ge-custom"
 RELEASES_API_URL = f"https://api.github.com/repos/{REPO}/releases"
-CACHE = Path("proton-ge-cache.json")
+CACHE_PATH = Path("proton-ge-cache.json")
+CACHE = dict()
 
 scroll_pos = 0  # (Start) scroll position
 screen = None  # Curses screen, for use with 
@@ -34,29 +35,44 @@ def checksum_is_equal_to(file: Path, checksum: str) -> bool:
         print(f"sha512sum from local file: '{file_checksum}'")
         return file_checksum == checksum
 
-def cache_request(url: str):
-    # Check if cache exists
-    cache_exists = CACHE.exists()
-    if not cache_exists:  # TODO check cache age
-        cache = {"releases": {}}
-        with CACHE.open("w", encoding="utf-8") as file:
-            dump(cache, file)
+def cache_load():
+    global CACHE
+    # Load cache if needed
+    if not CACHE_PATH.exists():  # TODO check cache age
+        CACHE = {"releases": {}}
+        with CACHE_PATH.open("w", encoding="utf-8") as file:
+            dump(CACHE, file)
     else:
-        # Read cache
-        with CACHE.open("r", encoding="utf-8") as cache_file:
-            cache = load(cache_file)
+        with CACHE_PATH.open("r", encoding="utf-8") as cache_file:
+            CACHE = load(cache_file)
 
-    # If the cache is empty or the requested url is not in the cache 
-    if not cache_exists or url not in cache["releases"].keys():
+def cache(key: str, subkey: str=None, value: any=None) -> any:
+    if value is None:
+        # Get from cache
+        if not subkey:
+            return CACHE[key]
+        else:
+            return CACHE[key][subkey]
+    else:
+        # Write to cache
+        if not subkey:
+            CACHE[key] = value
+        else:
+            CACHE[key][subkey] = value
+        with CACHE_PATH.open("w", encoding="utf-8") as cache_file:
+            dump(CACHE, cache_file)
+        return value
+
+def cache_request(url: str):
+    # If the requested url is not in the cache 
+    if url not in cache("releases").keys():
         # Request...
         with urlopen(url) as req:
-            cache["releases"][url] = req.read().decode("utf-8")
-        # ...and cache
-        with CACHE.open("w", encoding="utf-8") as cache_file:
-            dump(cache, cache_file)
-            
-    # Return req as-is from cache        
-    return cache["releases"][url]
+            # ...and cache
+            cache("releases", url, req.read().decode("utf-8"))
+    
+    # Return data from cache
+    return cache("releases", url)
         
 
 def get_steam_compattools_dir() -> Path:
@@ -112,9 +128,8 @@ class Release():
         print(f"sha512sum from upstream: '{checksum}'")
         return checksum
 
-    def install(self):
-        steam_dir = get_steam_compattools_dir()
-        target = steam_dir.joinpath(self.targz["name"])
+    def install(self, target_dir: Path):
+        target = target_dir.joinpath(self.targz["name"])
         
         print(f"Please wait! Downloading {self.name} to {target}...")
         urlretrieve(self.targz["url"], target)
@@ -126,10 +141,11 @@ class Release():
                 raise ValueError("Abandonded installation due to checksum problems")
 
         command = f"tar -xzvf {target.name}"
-        print(f"Running {command} in {steam_dir}...")
-        run(command, shell=True, cwd=steam_dir, encoding="UTF-8")
+        print(f"Running {command} in {target_dir}...")
+        run(command, shell=True, cwd=target_dir, encoding="UTF-8")
 
-        print(f"Done installing {self.name}! Removing {target.name}...")
+        print(f"Done installing {self.name} to {target_dir}")
+        print(f"Removing {target.name}...")
         remove(target)
         print("Done! Exiting...")
 
@@ -216,11 +232,11 @@ def start_tui() -> Release:  # TODO open on github
     return curses.wrapper(select_release, [])  # TODO remove global screen var
     
 if __name__ == "__main__":
-    #releases = get_proton_ge_releases()
+    cache_load()
+    target_dir = get_steam_compattools_dir()  # TODO cache
     release = start_tui()
     if release:
-        release.install()
-
+        release.install(target_dir)
 # TODO ask to clear cache
 
 # TODO further pages of releases
