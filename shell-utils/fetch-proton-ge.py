@@ -81,7 +81,13 @@ def cache_request(url: str):
     
     # Return data from cache
     return cache("releases", url)
-        
+
+def cache_ask_to_clear():
+    print(f"Do you want to remove the cache file at {CACHE_PATH.absolute()} ?")
+    print("This is not recommended if you're gonna use this script again soon")
+    if input("[y/N]: ").lower() == "y":
+        remove(CACHE_PATH)
+        print("Cache file removed")
 
 def get_steam_compattools_dir() -> Path:
     # Get from cache if possible
@@ -267,5 +273,6 @@ if __name__ == "__main__":
     release = start_tui(target_dir)
     if release:
         release.install(target_dir)
-# TODO ask to clear cache
+
+    cache_ask_to_clear()
 # TODO optimise cache 
