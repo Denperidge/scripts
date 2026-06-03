@@ -22,7 +22,6 @@ CACHE_PATH = Path("proton-ge-cache.json")
 CACHE = dict()
 
 scroll_pos = 0  # (Start) scroll position
-screen = None  # Curses screen, for use with 
 
 def checksum_is_equal_to(file: Path, checksum: str) -> bool:
     if run("sha512sum --help", shell=True, capture_output=True).returncode != 0:
@@ -244,14 +243,12 @@ def select_release(screen: curses.window, releases: list[Release]) -> Release:
         return select_release(screen, releases)
     
 def start_tui() -> Release:  # TODO open on github
-    return curses.wrapper(select_release, [])  # TODO remove global screen var
+    return curses.wrapper(select_release, [])
     
 if __name__ == "__main__":
     cache_load()
-    target_dir = get_steam_compattools_dir()  # TODO cache
+    target_dir = get_steam_compattools_dir()
     release = start_tui()
     if release:
         release.install(target_dir)
 # TODO ask to clear cache
-
-# TODO further pages of releases
