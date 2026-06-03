@@ -9,12 +9,37 @@ import curses
 
 """
 Download & extract proton-ge to the correct Steam location
-with a simple terminal script
+with a simple terminal script, requiring no extra dependencies
+on most modern Linux distros
 
-Requirements: any existing python3 version, tar command
+Developed for Linux & non-flatpak Steam,
+but should work on other setups with some changes
 
-Developed for non-flatpak Linux,
-but should work on other setups with some adapting
+Requirements:
+    - python3.7 or newer, supporting curses
+    - `tar` command
+Optional requirements:
+    - `sha512sum` command (hash verify)
+    - `xdg-open` command (open in file/web browser)
+Last update: 3 June 2026
+Example usage: python3 ./fetch-proton-ge.py
+Source: https://github.com/Denperidge/scripts
+
+Features:
+- Handles the following automatically:
+    - Downloading & extracting the the .tar.gz archive
+    - Putting Proton-GE in the correct location
+    - Verifying checksum for the GitHub releases
+- Only relies on requirements that should be met by
+  default in most modern Linux distros
+- Uses the curses library for a simple, lightweight
+  terminal UI
+- Caches requests for a day & custom path location if needed
+
+TODO/possible improvements:
+- Optimise cache: store less JSON data 
+- Support for macOS
+- Support for xdg_open alternative for non-xdg environments
 """
 
 REPO = "GloriousEggroll/proton-ge-custom"
@@ -284,4 +309,3 @@ if __name__ == "__main__":
         release.install(target_dir)
 
     cache_ask_to_clear()
-# TODO optimise cache 
