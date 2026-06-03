@@ -48,6 +48,10 @@ CACHE_PATH = Path("proton-ge-cache.json")
 CACHE = dict()
 
 scroll_pos = 0  # (Start) scroll position
+page = 1  # (Start) GitHub API pagination
+scroll_size = None  # Global var for consistent scroll size post-curses screen init
+actions = {}  # TUI controls, populated in start_tui
+
 
 def now():
     return datetime.now().strftime("%d-%m-%y")
@@ -211,33 +215,9 @@ def get_proton_ge_releases(page_size: int, page: int=1) -> list[Release]:
 def xdg_open(target: str):
     run(f"xdg-open '{target}'", shell=True, capture_output=True, start_new_session=True)
 
-def key_is_action(key: str):
-    """ Converts multiple keys to the same string, to allow multiple controls for the same function """
-
-    # Arrow up, Page Up, Arrow Up (Git Bash), Page Up (Git Bash), w, W, z, Z, 8
-    if key in ["KEY_UP", "KEY_PPAGE", "KEY_A2", "KEY_A3", "w", "W", "z", "Z", "8"]:
-        return "up"
-    # Arrow down, Page Down, Arrow down (Git Bash), Page Down (Git Bash), s, S, 5, 2
-    elif key in ["KEY_DOWN", "KEY_NPAGE", "KEY_C2", "KEY_C3", "s", "S", "5", "2"]:
-        return "down"
-    elif key in ["I", "i"]:
-        return "install"
-    elif key in ["E", "e"]:
-        return "exit"
-    elif key in ["O", "o"]:
-        return "open"
-    elif key in ["T", "t"]:
-        return "target"
-    else:
-        return None
-
-page = 1
-scroll_size = None
 def select_release(screen: curses.window, target_dir: Path, releases: list[Release]) -> Release:
-    global scroll_size
-    global scroll_pos
-    global page
     """Main curses CLI function. Displays releases and allows to scroll through & select them"""
+    global actions, scroll_size, scroll_pos, page
     keep_running = True
 
     if scroll_size is None:
@@ -277,7 +257,7 @@ def select_release(screen: curses.window, target_dir: Path, releases: list[Relea
 
     screen.refresh()
 
-    action = key_is_action(screen.getkey())
+    action = actions[screen.getkey()]
     if action == "up" and scroll_pos > 0:
         scroll_pos -= 1
     elif action == "down" and scroll_pos < len(releases):
@@ -297,8 +277,24 @@ def select_release(screen: curses.window, target_dir: Path, releases: list[Relea
 
     if keep_running:
         return select_release(screen, target_dir, releases)
-    
+
+def setup_action_keys(action: str, keys: list[str]):
+    global actions
+    for key in keys:
+        actions[key] = action
+
 def start_tui(target_dir: Path) -> Release:
+    # Arrow up, Page Up, Arrow Up (Git Bash), Page Up (Git Bash), w, W, z, Z, 8
+    setup_action_keys("up", ["KEY_UP", "KEY_PPAGE", "KEY_A2", "KEY_A3", "w", "W", "z", "Z", "8"])
+
+    # Arrow down, Page Down, Arrow down (Git Bash), Page Down (Git Bash), s, S, 5, 2
+    setup_action_keys("down", ["KEY_DOWN", "KEY_NPAGE", "KEY_C2", "KEY_C3", "s", "S", "5", "2"])
+
+    setup_action_keys("install", ["I", "i"])
+    setup_action_keys("exit", ["E", "e"])
+    setup_action_keys("open", ["O", "o"])
+    setup_action_keys("target", ["T", "t"])
+
     return curses.wrapper(select_release, target_dir, [])
     
 if __name__ == "__main__":
