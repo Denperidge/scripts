@@ -207,14 +207,23 @@ def key_is_action(key: str):
         return None
 
 page = 1
+scroll_size = None
 def select_release(screen: curses.window, target_dir: Path, releases: list[Release]) -> Release:
+    global scroll_size
     global scroll_pos
     global page
     """Main curses CLI function. Displays releases and allows to scroll through & select them"""
     keep_running = True
 
-    scroll_size = screen.getmaxyx()[0] - 5  # -5 for ui elements
+    if scroll_size is None:
+        scroll_size = screen.getmaxyx()[0] - 5  # -5 for ui elements
     
+    show_from = scroll_pos
+    show_to = scroll_pos + scroll_size
+    if scroll_pos != 0:
+        show_from -= 1
+        show_to -= 1
+
     if len(releases) == 0:  # Initialize
         releases = get_proton_ge_releases(scroll_size*3, page)
     """
@@ -227,18 +236,12 @@ def select_release(screen: curses.window, target_dir: Path, releases: list[Relea
     - 6 (6 loaded releases)
     """
     if scroll_pos == len(releases) - scroll_size + 1:
-        page += 1  # TODO can scroll_size schange unexpelctedly? - yes
+        page += 1
         releases += get_proton_ge_releases(page_size=scroll_size * 3, page=page)
 
     screen.addstr(" [ARROW_UP/PAGE_UP] Move up\t\t[I] Install\t[E] Exit  \n", curses.A_REVERSE)
     screen.addstr(" [ARROW_DOWN/PAGE_DOWN] Move down\t[O] Open on GitHub        \n", curses.A_REVERSE)
     screen.addstr(f" SCROLL POS: {scroll_pos}\tLOADED RELEASES: {len(releases)}\t[T] Open target directory \n\n", curses.A_REVERSE)
-
-    show_from = scroll_pos
-    show_to = scroll_pos + scroll_size
-    if scroll_pos != 0:
-        show_from -= 1
-        show_to -= 1
 
     for release in releases[show_from:show_to]:
         if releases.index(release) == scroll_pos:
