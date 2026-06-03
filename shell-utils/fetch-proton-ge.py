@@ -234,7 +234,13 @@ def select_release(screen: curses.window, target_dir: Path, releases: list[Relea
     screen.addstr(" [ARROW_DOWN/PAGE_DOWN] Move down\t[O] Open on GitHub        \n", curses.A_REVERSE)
     screen.addstr(f" SCROLL POS: {scroll_pos}\tLOADED RELEASES: {len(releases)}\t[T] Open target directory \n\n", curses.A_REVERSE)
 
-    for release in releases[scroll_pos:scroll_pos+scroll_size]:
+    show_from = scroll_pos
+    show_to = scroll_pos + scroll_size
+    if scroll_pos != 0:
+        show_from -= 1
+        show_to -= 1
+
+    for release in releases[show_from:show_to]:
         if releases.index(release) == scroll_pos:
             screen.addstr("> " + str(release), curses.A_STANDOUT)
         else:
